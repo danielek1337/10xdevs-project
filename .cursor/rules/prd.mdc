@@ -1,9 +1,11 @@
 ---
-description: Core rules and guidelines for VibeCheck application
-globs: 
-alwaysApply: true
+description: Product Requirements Document for VibeCheck application
+globs:
+alwaysApply: false
 ---
-# AI Rules for VibeCheck
+# Product Requirements Document - VibeCheck
+
+## Product Overview
 
 VibeCheck is a productivity tracking application that helps developers monitor their flow state and productivity levels throughout the day. Users can log their mood, tasks, and focus levels, with automatic calculation of daily productivity metrics.
 
@@ -15,29 +17,10 @@ VibeCheck is a productivity tracking application that helps developers monitor t
 - Tailwind 4
 - Shadcn/ui
 - Supabase (Auth + Database + RLS)
-- Playwright (E2E testing)dn
+- Playwright (E2E testing)
 - Vitest (Unit testing)
 - GitHub Actions (CI/CD)
 - Vercel (Deployment)
-
-## Project Structure
-
-When introducing changes to the project, always follow the directory structure below:
-
-- `./src` - source code
-- `./src/layouts` - Astro layouts
-- `./src/pages` - Astro pages
-- `./src/pages/api` - API endpoints
-- `./src/middleware/index.ts` - Astro middleware
-- `./src/db` - Supabase clients and types
-- `./src/types.ts` - Shared types for backend and frontend (Entities, DTOs)
-- `./src/components` - Client-side components written in Astro (static) and React (dynamic)
-- `./src/components/ui` - Client-side components from Shadcn/ui
-- `./src/lib` - Services and helpers 
-- `./src/assets` - static internal assets
-- `./public` - public assets
-
-When modifying the directory structure, always update this section.
 
 ## Core Features & Requirements
 
@@ -91,24 +74,24 @@ When modifying the directory structure, always update this section.
 - Calculate time gaps between entries
 - Generate daily/weekly/monthly summaries
 
-### Testing Requirements
+## Testing Requirements
 
-#### Unit Tests (Vitest)
+### Unit Tests (Vitest)
 - Test Daily Focus Score calculation function with various inputs
 - Test validation functions (anti-spam, mood range, etc.)
 - Test data formatting utilities
 - Test business logic edge cases
 
-#### E2E Tests (Playwright)
+### E2E Tests (Playwright)
 - Test complete authentication flow (signup, login, logout)
 - Test creating a new productivity entry
 - Test editing and deleting entries
 - Test dashboard data display
 - Test that users cannot access other users' data
 
-### CI/CD Pipeline
+## CI/CD Pipeline
 
-#### GitHub Actions Workflow
+### GitHub Actions Workflow
 - Run on every push to any branch
 - Execute all unit tests (Vitest)
 - Execute all E2E tests (Playwright)
@@ -117,16 +100,27 @@ When modifying the directory structure, always update this section.
 - Automatic deployment to Vercel on main branch (only if all tests pass)
 - Generate test coverage reports
 
-## Coding practices
+## User Stories
 
-### Guidelines for clean code
+### As a developer, I want to:
+- Log my current mood and task to track my productivity throughout the day
+- View my productivity history to understand my work patterns
+- See my Daily Focus Score to gauge my overall productivity
+- Filter my entries by date, mood, or tags to analyze specific periods
+- Edit my entries if I made a mistake or want to add more context
+- Delete entries that I no longer want to track
 
-- Use feedback from linters to improve the code when making changes.
-- Prioritize error handling and edge cases.
-- Handle errors and edge cases at the beginning of functions.
-- Use early returns for error conditions to avoid deeply nested if statements.
-- Place the happy path last in the function for improved readability.
-- Avoid unnecessary else statements; use if-return pattern instead.
-- Use guard clauses to handle preconditions and invalid states early.
-- Implement proper error logging and user-friendly error messages.
-- Consider using custom error types or error factories for consistent error handling.
+### As a productivity-conscious user, I need:
+- Visual representations of my productivity trends over time
+- Daily, weekly, and monthly summaries of my work patterns
+- Automatic calculations that help me understand my focus levels
+- A simple interface that doesn't interrupt my flow state
+
+## Success Metrics
+
+- User can create a new entry in less than 30 seconds
+- Daily Focus Score is calculated and displayed in real-time
+- All user data is protected by RLS with zero cross-user data access
+- Application loads in under 2 seconds
+- 95%+ test coverage for business logic
+- Zero security vulnerabilities in authentication flow
