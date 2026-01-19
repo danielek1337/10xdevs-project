@@ -471,7 +471,7 @@ Retrieves daily focus scores for the authenticated user.
 {
   "data": [
     {
-      "date": "2026-01-18",
+      "day": "2026-01-18",
       "entry_count": 8,
       "avg_mood": 4.25,
       "first_entry_at": "2026-01-18T08:00:00Z",
@@ -485,7 +485,7 @@ Retrieves daily focus scores for the authenticated user.
       }
     },
     {
-      "date": "2026-01-17",
+      "day": "2026-01-17",
       "entry_count": 5,
       "avg_mood": 3.8,
       "first_entry_at": "2026-01-17T09:00:00Z",
@@ -533,11 +533,11 @@ Retrieves aggregated focus score statistics.
     "total_entries": 42,
     "days_with_entries": 7,
     "best_day": {
-      "date": "2026-01-18",
+      "day": "2026-01-18",
       "focus_score": 82.5
     },
     "worst_day": {
-      "date": "2026-01-13",
+      "day": "2026-01-13",
       "focus_score": 65.0
     }
   },
