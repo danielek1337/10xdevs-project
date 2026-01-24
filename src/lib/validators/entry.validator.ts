@@ -31,8 +31,7 @@ export const createEntrySchema = z.object({
   notes: z
     .string()
     .optional()
-    .nullable()
-    .transform((val) => val || null),
+    .transform((val) => val || undefined),
 
   tags: z
     .array(

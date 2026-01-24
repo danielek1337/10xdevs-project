@@ -66,7 +66,7 @@ export class EntriesService {
         user_id: userId,
         mood: data.mood,
         task: data.task,
-        notes: data.notes || null,
+        notes: data.notes ?? null, // Convert undefined to null for database
         created_hour_utc: createdHourUtc, // Required by TypeScript (database types)
       })
       .select()

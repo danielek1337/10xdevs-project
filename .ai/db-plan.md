@@ -195,3 +195,4 @@ Jeśli planowane jest `ILIKE '%...%'` po `task` i/lub `notes`, rozważyć:
   - kto może tworzyć nowe globalne tagi (wszyscy vs admin) — wpływa na RLS dla `tags` (INSERT).
 
 
+

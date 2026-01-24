@@ -78,3 +78,4 @@ npx supabase start
 
 Więcej szczegółów: `.ai/SUPABASE_SETUP.md`
 
+

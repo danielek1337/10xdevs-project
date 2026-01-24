@@ -21,3 +21,4 @@ alter table public.entry_tags disable row level security;
 -- END OF MIGRATION
 -- ============================================================================
 
+

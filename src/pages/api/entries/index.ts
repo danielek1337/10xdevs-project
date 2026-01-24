@@ -100,13 +100,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
         Location: `/api/entries/${entry.id}`,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Step 6: Error handling
     // eslint-disable-next-line no-console
     console.error("Error creating entry:", error);
 
     // Anti-spam error (custom error object)
-    if (error.code === "ANTI_SPAM_VIOLATION") {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "ANTI_SPAM_VIOLATION") {
       return new Response(JSON.stringify(error), {
         status: 409,
         headers: { "Content-Type": "application/json" },
@@ -126,4 +126,3 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
   }
 };
-
