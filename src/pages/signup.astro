@@ -1,15 +1,14 @@
 ---
 /**
- * Landing Page
+ * Signup Page
  * 
- * Public landing page for unauthenticated users.
- * Displays value proposition and CTA buttons to signup/login.
+ * Renders the registration form for new users.
  * 
  * Server-side features:
  * - TODO: Auth check (redirect authenticated users to dashboard)
  */
 import Layout from "@/layouts/Layout.astro";
-import LandingView from "@/components/LandingView";
+import SignupView from "@/components/SignupView";
 
 // TODO: Server-side auth check will be implemented in backend phase
 // const session = await Astro.locals.supabase.auth.getSession();
@@ -18,6 +17,7 @@ import LandingView from "@/components/LandingView";
 // }
 ---
 
-<Layout title="VibeCheck - Track Your Flow">
-  <LandingView client:load />
+<Layout title="Sign Up - VibeCheck">
+  <SignupView client:load />
 </Layout>
+

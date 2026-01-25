@@ -1,0 +1,27 @@
+---
+/**
+ * Login Page
+ * 
+ * Renders the login form for existing users.
+ * 
+ * Server-side features:
+ * - TODO: Auth check (redirect authenticated users to dashboard)
+ * - TODO: Capture redirect parameter from URL for post-login navigation
+ */
+import Layout from "@/layouts/Layout.astro";
+import LoginView from "@/components/LoginView";
+
+// TODO: Server-side auth check will be implemented in backend phase
+// const session = await Astro.locals.supabase.auth.getSession();
+// if (session?.data?.session) {
+//   return Astro.redirect('/dashboard');
+// }
+
+// Capture redirect parameter from URL (optional)
+const redirectTo = Astro.url.searchParams.get("redirect") || "/dashboard";
+---
+
+<Layout title="Sign In - VibeCheck">
+  <LoginView client:load redirectTo={redirectTo} />
+</Layout>
+

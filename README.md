@@ -1,6 +1,8 @@
-# 10x Astro Starter
+# VibeCheck
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+A productivity tracking application that helps developers monitor their flow state and productivity levels throughout the day. Users can log their mood, tasks, and focus levels, with automatic calculation of daily productivity metrics.
+
+**🔒 Authentication Required:** This application requires users to create an account and log in to access all features.
 
 ## Tech Stack
 
@@ -8,19 +10,32 @@ A modern, opinionated starter template for building fast, accessible, and AI-fri
 - [React](https://react.dev/) v19.0.0 - UI library for building interactive components
 - [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
 - [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
+- [Supabase](https://supabase.com/) - Authentication, database, and row-level security
+- [Shadcn/ui](https://ui.shadcn.com/) - Re-usable UI components
+- [Playwright](https://playwright.dev/) - End-to-end testing
+- [Vitest](https://vitest.dev/) - Unit testing
 
 ## Prerequisites
 
 - Node.js v22.14.0 (as specified in `.nvmrc`)
 - npm (comes with Node.js)
 
+## Features
+
+- **Productivity Tracking:** Log mood, tasks, and focus levels throughout the day
+- **Daily Focus Score:** Automatic calculation based on mood ratings and entry frequency
+- **Data Visualization:** Visual trends and patterns in your productivity
+- **Filtering & Sorting:** Filter entries by date, mood, or tags
+- **Secure & Private:** Row-level security ensures your data is only accessible to you
+- **Authentication:** Email/password authentication with password recovery
+
 ## Getting Started
 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/przeprogramowani/10x-astro-starter.git
-cd 10x-astro-starter
+git clone <repository-url>
+cd 10xdevs-project
 ```
 
 2. Install dependencies:
@@ -29,13 +44,28 @@ cd 10x-astro-starter
 npm install
 ```
 
-3. Run the development server:
+3. Set up environment variables:
+
+Create a `.env` file with your Supabase credentials:
+
+```bash
+PUBLIC_SUPABASE_URL=your_supabase_url
+PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+4. Run database migrations:
+
+```bash
+# Connect to your Supabase project and run migrations from supabase/migrations/
+```
+
+5. Run the development server:
 
 ```bash
 npm run dev
 ```
 
-4. Build for production:
+6. Build for production:
 
 ```bash
 npm run build
@@ -48,19 +78,42 @@ npm run build
 - `npm run preview` - Preview production build
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint issues
+- `npm run test` - Run unit tests with Vitest
+- `npm run test:e2e` - Run end-to-end tests with Playwright
 
 ## Project Structure
 
 ```md
 .
 ├── src/
-│   ├── layouts/    # Astro layouts
-│   ├── pages/      # Astro pages
-│   │   └── api/    # API endpoints
-│   ├── components/ # UI components (Astro & React)
-│   └── assets/     # Static assets
-├── public/         # Public assets
+│   ├── layouts/       # Astro layouts
+│   ├── pages/         # Astro pages (routes)
+│   │   └── api/       # API endpoints
+│   ├── components/    # UI components (Astro & React)
+│   │   └── ui/        # Shadcn/ui components
+│   ├── db/            # Supabase clients and types
+│   ├── lib/           # Services and utilities
+│   │   ├── services/  # Business logic services
+│   │   ├── utils/     # Helper functions
+│   │   └── validators/# Validation functions
+│   ├── hooks/         # React hooks
+│   ├── middleware/    # Astro middleware (auth)
+│   ├── types/         # TypeScript type definitions
+│   └── assets/        # Static assets
+├── public/            # Public assets
+└── supabase/          # Supabase configuration
+    └── migrations/    # Database migrations
 ```
+
+## Authentication
+
+VibeCheck uses Supabase Authentication with email/password only. Key features:
+
+- **Public Access:** Landing page (`/`) is accessible to all users
+- **Protected Routes:** Dashboard and all features require authentication
+- **Row Level Security:** Database policies ensure users can only access their own data
+- **Password Recovery:** Users can reset their password via email
+- **No OAuth:** External login providers (Google, GitHub, etc.) are not used
 
 ## AI Development Support
 

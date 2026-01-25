@@ -9,6 +9,8 @@ alwaysApply: false
 
 VibeCheck is a productivity tracking application that helps developers monitor their flow state and productivity levels throughout the day. Users can log their mood, tasks, and focus levels, with automatic calculation of daily productivity metrics.
 
+**Authentication Required:** The application requires users to create an account and log in to access all features. Unauthenticated users can only view the landing page with login/signup options.
+
 ## Tech Stack
 
 - Astro 5
@@ -26,10 +28,16 @@ VibeCheck is a productivity tracking application that helps developers monitor t
 
 ### Authentication & Access Control
 
+- **Authentication Required:** All application features require user authentication
+- Landing page (`/`) is public and displays welcome message with login/signup options
+- Dashboard (`/dashboard`) and all other pages require active authentication session
 - Use Supabase Auth with Email/Password authentication only
+- No external OAuth providers (Google, GitHub, etc.)
 - Implement Row Level Security (RLS) to ensure users can only access their own entries
 - All database queries must respect RLS policies
 - Protect API endpoints with authentication middleware
+- Middleware redirects unauthenticated users to landing page
+- Password recovery functionality must be available
 
 ### Data Management (CRUD Operations)
 
@@ -115,6 +123,18 @@ VibeCheck is a productivity tracking application that helps developers monitor t
 - Daily, weekly, and monthly summaries of my work patterns
 - Automatic calculations that help me understand my focus levels
 - A simple interface that doesn't interrupt my flow state
+
+### As a new user, I want to:
+- Register for an account using email and password
+- Receive clear validation feedback during registration
+- Log in to access my personal productivity dashboard
+- Recover my password if I forget it
+
+### As an authenticated user, I want to:
+- Access all application features after logging in
+- Stay logged in across browser sessions (remember me)
+- Log out securely when I'm done
+- Have confidence that my data is private and secure
 
 ## Success Metrics
 
