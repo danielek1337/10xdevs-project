@@ -114,4 +114,41 @@ export class TagsService {
 
     return data || [];
   }
+
+  /**
+   * Get tags with optional search filter
+   *
+   * @param params - Query parameters for filtering
+   * @returns Tags list response with metadata
+   * @throws Error if fetch fails
+   */
+  async getTags(params: import("../../types").TagsQueryParamsDTO): Promise<import("../../types").TagsResponseDTO> {
+    const { search, limit = 100 } = params;
+    const safeLimit = Math.min(Math.max(limit, 1), 500);
+
+    let query = this.supabase.from("tags").select("*", { count: "exact" }).order("name", { ascending: true });
+
+    // Apply search filter (prefix match)
+    if (search && search.trim().length > 0) {
+      query = query.ilike("name", `${search.trim()}%`);
+    }
+
+    // Apply limit
+    query = query.limit(safeLimit);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      throw new Error(`Failed to fetch tags: ${error.message}`);
+    }
+
+    return {
+      data: (data || []).map((tag) => ({
+        id: tag.id,
+        name: tag.name,
+        created_at: tag.created_at,
+      })),
+      total: count || 0,
+    };
+  }
 }

@@ -1,0 +1,22 @@
+---
+/**
+ * Dashboard Page - Main productivity tracking interface
+ * 
+ * This page requires authentication (checked via middleware)
+ * Displays:
+ * - Focus Score Widget with 7-day trend
+ * - Entry creation form
+ * - Paginated list of entries with filters
+ */
+
+import Layout from '@/layouts/Layout.astro';
+import DashboardView from '@/components/DashboardView';
+
+// Server-side auth check (middleware handles redirect)
+// TODO: Add server-side data fetching for initial state (optional)
+---
+
+<Layout title="Dashboard - VibeCheck">
+  <DashboardView client:load />
+</Layout>
+

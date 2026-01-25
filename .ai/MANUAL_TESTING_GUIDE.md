@@ -1,385 +1,453 @@
-# Manual Testing Guide: POST /api/entries
+# 📋 Dashboard Manual Testing Guide
 
-## Prerequisites
+## Przygotowanie
 
-1. **Start development server:**
-   ```bash
-   npm run dev
-   ```
-
-2. **Ensure Supabase is configured:**
-   - `SUPABASE_URL` in environment variables
-   - `SUPABASE_KEY` in environment variables
-   - Database migrations applied
-
-## Test Suite
-
-### Test 1: Successful Entry Creation ✅
-
-**Request:**
+### 1. Uruchom środowisko
 ```bash
-curl -X POST http://localhost:4321/api/entries \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{
-    "mood": 4,
-    "task": "Implemented POST /api/entries endpoint",
-    "notes": "Full implementation with validation and tests",
-    "tags": ["coding", "backend", "api"]
-  }'
+# Terminal 1: Supabase
+npx supabase start
+
+# Terminal 2: Dev server
+npm run dev
 ```
 
-**Expected Response:** `201 Created`
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "user_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
-  "mood": 4,
-  "task": "Implemented POST /api/entries endpoint",
-  "notes": "Full implementation with validation and tests",
-  "tags": [
-    {
-      "id": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
-      "name": "coding",
-      "created_at": "2026-01-18T10:00:00.000Z"
-    },
-    {
-      "id": "b2c3d4e5-f6a7-5b6c-9d0e-1f2a3b4c5d6e",
-      "name": "backend",
-      "created_at": "2026-01-18T10:00:00.000Z"
-    },
-    {
-      "id": "c3d4e5f6-a7b8-6c7d-0e1f-2a3b4c5d6e7f",
-      "name": "api",
-      "created_at": "2026-01-18T10:00:00.000Z"
-    }
-  ],
-  "created_at": "2026-01-18T10:00:00.000Z",
-  "updated_at": "2026-01-18T10:00:00.000Z"
-}
-```
-
-**Headers:**
-- `Content-Type: application/json`
-- `Location: /api/entries/{entry_id}`
-
----
-
-### Test 2: Validation Error - Invalid Mood ❌
-
-**Request:**
+### 2. Sprawdź czy API endpoints odpowiadają
 ```bash
-curl -X POST http://localhost:4321/api/entries \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{
-    "mood": 6,
-    "task": "Test task"
-  }'
-```
-
-**Expected Response:** `400 Bad Request`
-```json
-{
-  "error": "Validation failed",
-  "code": "VALIDATION_ERROR",
-  "details": {
-    "mood": "Mood must be between 1 and 5"
-  }
-}
+# Powinieneś widzieć 200 zamiast 404
+# [200] GET /api/entries
+# [200] GET /api/focus-scores
+# [200] GET /api/tags
 ```
 
 ---
 
-### Test 3: Validation Error - Task Too Short ❌
+## Test Scenariusze
 
-**Request:**
-```bash
-curl -X POST http://localhost:4321/api/entries \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{
-    "mood": 3,
-    "task": "Ab"
-  }'
-```
+### ✅ Scenario 1: Pierwsze Logowanie (New User)
 
-**Expected Response:** `400 Bad Request`
-```json
-{
-  "error": "Validation failed",
-  "code": "VALIDATION_ERROR",
-  "details": {
-    "task": "Task must be at least 3 characters"
-  }
-}
+**Cel:** Sprawdzić empty state dla nowego użytkownika
+
+1. Otwórz `http://localhost:3000/dashboard`
+2. **Oczekiwany wynik:**
+   - Focus Score Widget pokazuje "Brak danych" (empty state)
+   - Lista wpisów pokazuje "Witaj w VibeCheck! 👋"
+   - Przycisk "Stwórz pierwszy wpis" jest widoczny
+   - Formularz tworzenia wpisu jest aktywny
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 2: Tworzenie Pierwszego Wpisu
+
+**Cel:** Sprawdzić pełny przepływ tworzenia wpisu
+
+1. Wypełnij formularz:
+   - Wybierz nastrój (kliknij na jedną z liczb 1-5)
+   - Wpisz zadanie: "Implementacja Dashboard"
+   - (Opcjonalnie) Dodaj notatkę: "Wszystko działa świetnie!"
+   - (Opcjonalnie) Dodaj tagi: wpisz "frontend" i kliknij
+2. Kliknij "Stwórz wpis"
+
+**Oczekiwany wynik:**
+- Toast notification: "Wpis został utworzony!"
+- Lista wpisów pokazuje nowy wpis
+- Focus Score Widget się aktualizuje (pokazuje score)
+- Formularz się czyści (ready for next entry)
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 3: Anti-Spam Protection
+
+**Cel:** Sprawdzić mechanizm anti-spam (max 1 wpis na godzinę)
+
+1. Po utworzeniu wpisu, spróbuj od razu utworzyć kolejny
+2. Wypełnij formularz i kliknij "Stwórz wpis"
+
+**Oczekiwany wynik:**
+- Formularz jest zablokowany (przyciski disabled)
+- Widoczny pomarańczowy alert z countdown timerem
+- Alert pokazuje czas ostatniego wpisu i countdown
+- Countdown aktualizuje się co sekundę
+- Po upływie czasu, formularz się odblokowuje
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 4: Przeglądanie Listy Wpisów
+
+**Cel:** Sprawdzić wyświetlanie wpisów
+
+1. Przewiń do sekcji "Twoje wpisy"
+2. Sprawdź każdą kartę wpisu (EntryCard)
+
+**Oczekiwany wynik:**
+Każda karta pokazuje:
+- Badge z nastrojem (kolorowy, z emoji)
+- Opis zadania (truncated po 100 znakach jeśli długi)
+- Timestamp względny ("5m temu", "2h temu", "Wczoraj")
+- Tagi (jeśli są)
+- Przycisk "..." (dropdown menu) z opcjami:
+  - "Edytuj"
+  - "Usuń"
+- (Opcjonalnie) Collapsed notes z przyciskiem "Pokaż więcej"
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 5: Edycja Wpisu
+
+**Cel:** Sprawdzić pełny przepływ edycji wpisu
+
+1. Kliknij "..." na karcie wpisu
+2. Wybierz "Edytuj"
+3. Modal się otwiera z wypełnionym formularzem
+4. Zmień nastrój na inny (np. z 3 na 5)
+5. Zmień opis zadania
+6. Dodaj lub usuń tagi
+7. Kliknij "Zapisz zmiany"
+
+**Oczekiwany wynik:**
+- Modal się otwiera z prawidłowymi danymi
+- Zmiany są zapisywane
+- Toast notification: "Wpis został zaktualizowany."
+- Modal się zamyka
+- Lista wpisów pokazuje zaktualizowany wpis
+- Focus Score się przelicza (jeśli nastrój się zmienił)
+- Timestamp pokazuje "Zaktualizowano: [czas]"
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 6: Usuwanie Wpisu
+
+**Cel:** Sprawdzić pełny przepływ usuwania wpisu
+
+1. Kliknij "..." na karcie wpisu
+2. Wybierz "Usuń"
+3. Dialog potwierdzenia się otwiera
+4. Przeczytaj ostrzeżenie
+5. Kliknij "Usuń"
+
+**Oczekiwany wynik:**
+- Dialog potwierdzenia pokazuje ostrzeżenie
+- Toast notification: "Wpis został usunięty."
+- Wpis znika z listy
+- Focus Score się przelicza
+- Jeśli był to ostatni wpis, pokazuje się empty state
+
+**Opcjonalnie: Test anulowania**
+1. Kliknij "..." → "Usuń"
+2. Kliknij "Anuluj"
+- Dialog się zamyka
+- Wpis pozostaje na liście
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 7: Filtrowanie po Nastroju
+
+**Cel:** Sprawdzić filtr nastroju
+
+1. Utwórz 3-5 wpisów z różnymi nastrojami (1, 3, 5)
+2. W FilterBar, kliknij dropdown "Filtruj nastrój"
+3. Wybierz "😊 Dobry (4-5)"
+4. Sprawdź listę
+
+**Oczekiwany wynik:**
+- Lista pokazuje tylko wpisy z nastrojem 4 lub 5
+- Inne wpisy są ukryte
+- Pagination się aktualizuje
+- Badge "😊 Dobry" jest aktywny
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 8: Filtrowanie po Tagu
+
+**Cel:** Sprawdzić filtr tagów
+
+1. Utwórz wpisy z różnymi tagami (frontend, backend, testing)
+2. W FilterBar, kliknij na tag "frontend" w aktywnych filtrach
+   LUB kliknij na tag "frontend" na karcie wpisu
+3. Sprawdź listę
+
+**Oczekiwany wynik:**
+- Lista pokazuje tylko wpisy z tagiem "frontend"
+- Badge z tagiem jest podświetlony jako aktywny
+- Przycisk "Wyczyść filtry" jest widoczny
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 9: Wyszukiwanie (Search)
+
+**Cel:** Sprawdzić debounced search
+
+1. W FilterBar, kliknij w pole "Szukaj zadań..."
+2. Wpisz "dashboard"
+3. Poczekaj 500ms (debounce)
+
+**Oczekiwany wynik:**
+- Po 500ms lista się aktualizuje
+- Pokazują się tylko wpisy zawierające "dashboard" w zadaniu lub notatkach
+- Search box pokazuje wprowadzony tekst
+- Przycisk "X" w search box pozwala wyczyścić
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 10: Sortowanie
+
+**Cel:** Sprawdzić różne opcje sortowania
+
+1. W FilterBar, kliknij dropdown "Sortuj"
+2. Wybierz "Nastrój"
+3. Kliknij dropdown "Kolejność"
+4. Wybierz "Rosnąco"
+
+**Oczekiwany wynik:**
+- Lista sortuje się według nastroju od najmniejszego (1) do największego (5)
+- Zmiana sortowania jest instant (bez przeładowania)
+
+**Inne kombinacje do przetestowania:**
+- Data utworzenia (desc) - domyślne
+- Data utworzenia (asc) - od najstarszych
+- Data aktualizacji (desc) - ostatnio edytowane na górze
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 11: Paginacja
+
+**Cel:** Sprawdzić nawigację między stronami
+
+**Przygotowanie:** Utwórz co najmniej 21 wpisów (więcej niż limit 20/stronę)
+
+1. Przewiń do stopki z paginacją
+2. Sprawdź tekst: "Wyświetlanie 1-20 z 21 wpisów"
+3. Kliknij "Następna"
+4. Sprawdź tekst: "Wyświetlanie 21-21 z 21 wpisów"
+5. Kliknij "Poprzednia"
+
+**Oczekiwany wynik:**
+- Przyciski "Poprzednia" i "Następna" działają
+- Licznik strony się aktualizuje
+- Przyciski są disabled gdy na pierwszej/ostatniej stronie
+- Lista wpisów się zmienia
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 12: Czyszczenie Filtrów
+
+**Cel:** Sprawdzić reset wszystkich filtrów
+
+1. Ustaw kilka filtrów:
+   - Nastrój: "Dobry"
+   - Tag: "frontend"
+   - Search: "dashboard"
+2. Kliknij "Wyczyść filtry"
+
+**Oczekiwany wynik:**
+- Wszystkie filtry się resetują
+- Lista pokazuje wszystkie wpisy
+- Search box jest pusty
+- Dropdown nastroju pokazuje "Wszystkie"
+- Tagi nie są aktywne
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 13: Focus Score Widget
+
+**Cel:** Sprawdzić wyświetlanie metryk produktywności
+
+**Przygotowanie:** Utwórz wpisy przez kilka dni
+
+1. Sprawdź Focus Score Widget (górny lewy panel)
+2. Sprawdź sekcję "Dzisiaj"
+3. Sprawdź "Szczegóły"
+4. Sprawdź wykres trendów (7 dni)
+
+**Oczekiwany wynik:**
+**Sekcja "Dzisiaj":**
+- Focus Score (0-100)
+- Progress bar (kolorowy)
+- Emoji odpowiadający score (😴 < 30, 😐 30-60, 😊 60-80, 🔥 > 80)
+
+**Szczegóły:**
+- Nastrój: X/5
+- Składowe:
+  - Nastrój: X/100 (mood_score)
+  - Konsystencja: X/100 (consistency_score)
+  - Rozkład: X/100 (distribution_score)
+- Liczba wpisów: X
+- Czas aktywności: Xh Ym
+
+**Wykres:**
+- Ostatnie 7 dni widoczne
+- Tooltip po hover pokazuje:
+  - Datę
+  - Focus Score
+  - Liczbę wpisów
+  - Średni nastrój
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 14: TagsCombobox Autocomplete
+
+**Cel:** Sprawdzić sugestie tagów
+
+1. Otwórz formularz tworzenia wpisu
+2. Kliknij w pole "Dodaj tagi"
+3. Wpisz "fro" (część tagu "frontend")
+4. Poczekaj 500ms (debounce)
+
+**Oczekiwany wynik:**
+- Lista sugestii pokazuje istniejące tagi zawierające "fro"
+- Można kliknąć na sugestię, aby dodać tag
+- Jeśli tag nie istnieje, pokazuje się "Nie znaleziono tagów"
+- Można dodać nowy tag przez Enter
+- Wybrane tagi pokazują się jako chipy z przyciskiem "X"
+- Max 10 tagów (walidacja)
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 15: Responsywność Mobile
+
+**Cel:** Sprawdzić RWD na małych ekranach
+
+1. Otwórz DevTools (F12)
+2. Przełącz na widok mobile (iPhone 12 Pro)
+3. Sprawdź wszystkie komponenty
+
+**Oczekiwany wynik:**
+- Header sticky działa
+- Logo i UserMenu są widoczne
+- Focus Score Widget i Formularz układają się pionowo
+- FilterBar działa (dropdowny nie wychodzą poza ekran)
+- Karty wpisów są czytelne (single column)
+- Pagination działa (tekst się zmienia na krótszy)
+- Wszystkie przyciski są clickable (min 44x44px)
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 16: Dark Mode (jeśli zaimplementowany)
+
+**Cel:** Sprawdzić tryb ciemny
+
+1. Przełącz system na dark mode
+2. Odśwież stronę
+
+**Oczekiwany wynik:**
+- Kolory się zmieniają (dark bg, light text)
+- Wykresy używają ciemnych kolorów
+- Kontrast jest wystarczający (WCAG AA)
+- Wszystkie komponenty są czytelne
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 17: Keyboard Navigation
+
+**Cel:** Sprawdzić nawigację klawiaturą (accessibility)
+
+1. Otwórz dashboard
+2. Używaj tylko klawiatury (Tab, Enter, Escape, Arrows)
+
+**Oczekiwany wynik:**
+- Tab przechodzi przez wszystkie interaktywne elementy
+- Focus ring jest widoczny na każdym elemencie
+- Enter/Space aktywuje przyciski
+- Escape zamyka modals i dropdowny
+- Arrows działają w dropdown menu i listach
+
+**Pass/Fail:** [ ]
+
+---
+
+### ✅ Scenario 18: UserMenu & Logout
+
+**Cel:** Sprawdzić menu użytkownika i wylogowanie
+
+1. Kliknij ikonę użytkownika (prawy górny róg)
+2. Sprawdź menu
+3. Kliknij "Wyloguj się"
+
+**Oczekiwany wynik:**
+- Menu pokazuje email użytkownika
+- Menu pokazuje ID użytkownika (pierwsze 8 znaków)
+- Toast notification: "Wylogowano pomyślnie."
+- Przekierowanie do `/login`
+- Session jest zakończona
+
+**Pass/Fail:** [ ]
+
+---
+
+## 🐛 Bug Report Template
+
+Jeśli znajdziesz bug, użyj tego template:
+
+```markdown
+### Bug: [Krótki opis]
+
+**Kroki do reprodukcji:**
+1. 
+2. 
+3. 
+
+**Oczekiwany wynik:**
+- 
+
+**Rzeczywisty wynik:**
+- 
+
+**Screenshots/Console errors:**
+[Wklej tutaj]
+
+**Środowisko:**
+- Browser: 
+- OS: 
+- Screen size: 
 ```
 
 ---
 
-### Test 4: Validation Error - Invalid Tags ❌
+## ✅ Test Summary
 
-**Request:**
-```bash
-curl -X POST http://localhost:4321/api/entries \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{
-    "mood": 4,
-    "task": "Test task with invalid tags",
-    "tags": ["Invalid-Tag", "tag with spaces", "UPPERCASE"]
-  }'
+**Przeszło:** [ ] / 18  
+**Nie przeszło:** [ ] / 18  
+
+**Gotowe do produkcji:** [ ] Tak [ ] Nie
+
+**Dodatkowe uwagi:**
 ```
-
-**Expected Response:** `400 Bad Request`
-```json
-{
-  "error": "Validation failed",
-  "code": "VALIDATION_ERROR",
-  "details": {
-    "tags.0": "Each tag must be lowercase, alphanumeric, and 1-20 characters"
-  }
-}
+[Wpisz tutaj]
 ```
 
 ---
 
-### Test 5: Unauthorized - No Token 🔒
-
-**Request:**
-```bash
-curl -X POST http://localhost:4321/api/entries \
-  -H "Content-Type: application/json" \
-  -d '{
-    "mood": 4,
-    "task": "Test task"
-  }'
-```
-
-**Expected Response:** `401 Unauthorized`
-```json
-{
-  "error": "Unauthorized",
-  "code": "UNAUTHORIZED"
-}
-```
-
----
-
-### Test 6: Anti-Spam Violation ⏰
-
-**Request 1:** (Create first entry)
-```bash
-curl -X POST http://localhost:4321/api/entries \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{
-    "mood": 4,
-    "task": "First entry this hour"
-  }'
-```
-
-**Expected:** `201 Created`
-
-**Request 2:** (Try to create second entry immediately)
-```bash
-curl -X POST http://localhost:4321/api/entries \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{
-    "mood": 5,
-    "task": "Second entry this hour"
-  }'
-```
-
-**Expected Response:** `409 Conflict`
-```json
-{
-  "error": "You can only create one entry per hour",
-  "code": "ANTI_SPAM_VIOLATION",
-  "retry_after": "2026-01-18T11:00:00Z",
-  "details": {
-    "current_entry_created_at": "2026-01-18T10:15:00Z",
-    "hour_bucket": "2026-01-18T10:00:00Z"
-  }
-}
-```
-
----
-
-### Test 7: Invalid JSON 📄
-
-**Request:**
-```bash
-curl -X POST http://localhost:4321/api/entries \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d 'invalid json{'
-```
-
-**Expected Response:** `400 Bad Request`
-```json
-{
-  "error": "Invalid JSON",
-  "code": "INVALID_JSON"
-}
-```
-
----
-
-### Test 8: Entry Without Optional Fields ✅
-
-**Request:**
-```bash
-curl -X POST http://localhost:4321/api/entries \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{
-    "mood": 3,
-    "task": "Minimal entry"
-  }'
-```
-
-**Expected Response:** `201 Created`
-```json
-{
-  "id": "...",
-  "user_id": "...",
-  "mood": 3,
-  "task": "Minimal entry",
-  "notes": null,
-  "tags": [],
-  "created_at": "...",
-  "updated_at": "..."
-}
-```
-
----
-
-## How to Get Authentication Token
-
-### Option 1: Create test user via Supabase Dashboard
-1. Go to Supabase Dashboard → Authentication → Users
-2. Add user manually
-3. Use SQL to get JWT token:
-   ```sql
-   SELECT auth.sign({
-     'sub': 'USER_UUID',
-     'role': 'authenticated'
-   }, 'your-jwt-secret', 'HS256');
-   ```
-
-### Option 2: Implement login endpoint first
-Create `POST /api/auth/login` endpoint that returns access token.
-
-### Option 3: Use Supabase client in browser console
-```javascript
-const { data } = await supabase.auth.signInWithPassword({
-  email: 'test@example.com',
-  password: 'password123'
-});
-console.log(data.session.access_token);
-```
-
----
-
-## Verification Checklist
-
-After running tests, verify in Supabase Dashboard:
-
-- [ ] **entries table:** New entry exists with correct data
-- [ ] **tags table:** New tags created (if didn't exist before)
-- [ ] **entry_tags table:** Associations created correctly
-- [ ] **created_hour_utc:** Set to correct UTC hour bucket
-- [ ] **updated_at:** Matches created_at for new entries
-- [ ] **RLS:** If enabled, verify isolation between users
-
----
-
-## Edge Cases to Test
-
-### Tag Deduplication
-```bash
-curl -X POST http://localhost:4321/api/entries \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{
-    "mood": 4,
-    "task": "Testing duplicate tags",
-    "tags": ["coding", "coding", "coding"]
-  }'
-```
-
-**Expected:** Only one "coding" tag associated
-
-### Maximum Tags (10)
-```bash
-curl -X POST http://localhost:4321/api/entries \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{
-    "mood": 4,
-    "task": "Testing max tags",
-    "tags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8", "tag9", "tag10", "tag11"]
-  }'
-```
-
-**Expected:** `400 Bad Request` - "Maximum 10 tags allowed"
-
-### Whitespace Trimming
-```bash
-curl -X POST http://localhost:4321/api/entries \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{
-    "mood": 4,
-    "task": "   Task with spaces   "
-  }'
-```
-
-**Expected:** `201 Created` with task trimmed to "Task with spaces"
-
----
-
-## Performance Testing
-
-### Measure Response Time
-```bash
-curl -X POST http://localhost:4321/api/entries \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{"mood": 4, "task": "Performance test"}' \
-  -w "\n\nTime: %{time_total}s\n"
-```
-
-**Expected:** < 1 second for p95
-
----
-
-## Troubleshooting
-
-### Error: "Invalid JWT token"
-- Check token hasn't expired (default: 1 hour)
-- Verify SUPABASE_URL and SUPABASE_KEY are correct
-- Ensure user exists in auth.users table
-
-### Error: "CORS policy"
-- Add CORS headers in Astro config if testing from browser
-- Use `--cors` flag with curl if needed
-
-### Error: "Database connection failed"
-- Verify Supabase is running (local or cloud)
-- Check network connectivity
-- Verify database credentials
-
----
-
-## Next Steps
-
-After manual testing passes:
-1. Implement E2E tests with Playwright
-2. Set up CI/CD pipeline
-3. Add monitoring and alerting
-4. Deploy to staging environment
-
-
+**Data testów:** _________  
+**Tester:** _________  
+**Wersja:** v1.0.0

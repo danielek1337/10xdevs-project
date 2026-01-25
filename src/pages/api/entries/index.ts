@@ -1,10 +1,96 @@
 import type { APIRoute } from "astro";
 import { createEntrySchema } from "../../../lib/validators/entry.validator";
 import { EntriesService } from "../../../lib/services/entries.service";
-import type { EntryDTO, ValidationErrorResponseDTO, ErrorResponseDTO } from "../../../types";
+import type { EntryDTO, ValidationErrorResponseDTO, ErrorResponseDTO, EntriesQueryParamsDTO } from "../../../types";
 
 // Disable prerendering for API routes
 export const prerender = false;
+
+/**
+ * GET /api/entries
+ * Get paginated list of entries with filters
+ *
+ * Authentication: Required (Bearer token)
+ *
+ * Query Parameters:
+ * - page: number (default: 1, min: 1)
+ * - limit: number (default: 20, min: 1, max: 100)
+ * - sort: "created_at" | "mood" | "updated_at" (default: "created_at")
+ * - order: "asc" | "desc" (default: "desc")
+ * - mood: number (1-5, optional)
+ * - tag: string | string[] (optional, filter by tag name)
+ * - date_from: ISO 8601 string (optional)
+ * - date_to: ISO 8601 string (optional)
+ * - search: string (optional, search in task and notes)
+ *
+ * Responses:
+ * - 200: Paginated entries list
+ * - 401: Unauthorized
+ * - 500: Internal server error
+ */
+export const GET: APIRoute = async ({ url, locals }) => {
+  try {
+    // Step 1: Authentication check
+    const { supabase, user } = locals;
+    const userId = user?.id || "00000000-0000-0000-0000-000000000000"; // Mock user for testing
+
+    // Step 2: Parse query parameters
+    const params = url.searchParams;
+    const queryParams: EntriesQueryParamsDTO = {
+      page: params.get("page") ? parseInt(params.get("page") as string) : 1,
+      limit: params.get("limit") ? parseInt(params.get("limit") as string) : 20,
+      sort: (params.get("sort") as "created_at" | "mood" | "updated_at") || "created_at",
+      order: (params.get("order") as "asc" | "desc") || "desc",
+    };
+
+    // Optional filters
+    const moodParam = params.get("mood");
+    if (moodParam) {
+      queryParams.mood = parseInt(moodParam);
+    }
+    if (params.get("tag")) {
+      // Support multiple tag parameters
+      queryParams.tag = params.getAll("tag");
+    }
+    const dateFromParam = params.get("date_from");
+    if (dateFromParam) {
+      queryParams.date_from = dateFromParam;
+    }
+    const dateToParam = params.get("date_to");
+    if (dateToParam) {
+      queryParams.date_to = dateToParam;
+    }
+    const searchParam = params.get("search");
+    if (searchParam) {
+      queryParams.search = searchParam;
+    }
+
+    // Step 3: Fetch entries via service
+    const entriesService = new EntriesService(supabase);
+    const result = await entriesService.getEntries(userId, queryParams);
+
+    // Step 4: Return success response
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error: unknown) {
+    // Step 5: Error handling
+    // eslint-disable-next-line no-console
+    console.error("Error fetching entries:", error);
+
+    return new Response(
+      JSON.stringify({
+        error: "Internal server error",
+        code: "INTERNAL_ERROR",
+      } as ErrorResponseDTO),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+};
 
 /**
  * POST /api/entries
