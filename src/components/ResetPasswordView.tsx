@@ -23,6 +23,8 @@ import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
 import { CheckCircle2 } from "lucide-react";
+import { resetPasswordSchema } from "@/lib/validators/auth.validator";
+import type { MessageResponseDTO, ErrorResponseDTO } from "@/types";
 
 interface ResetPasswordState {
   accessToken: string | null;
@@ -88,9 +90,38 @@ export default function ResetPasswordView() {
 
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-    // TODO: Implement API call to /api/auth/reset-password
-    // For now, just simulate loading
-    setTimeout(() => {
+    // Client-side validation with Zod
+    const validationResult = resetPasswordSchema.safeParse({ password: state.password });
+
+    if (!validationResult.success) {
+      const errors = validationResult.error.flatten().fieldErrors;
+      const errorMessage = Object.values(errors).flat()[0] || "Password validation failed";
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }));
+      return;
+    }
+
+    try {
+      // Call API endpoint
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${state.accessToken}`,
+        },
+        body: JSON.stringify({
+          password: state.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const error: ErrorResponseDTO = await response.json();
+        throw new Error(error.error || "Failed to reset password");
+      }
+
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -101,7 +132,13 @@ export default function ResetPasswordView() {
       setTimeout(() => {
         window.location.href = "/login";
       }, 2000);
-    }, 1000);
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : "An unexpected error occurred",
+      }));
+    }
   };
 
   // Error state: invalid token

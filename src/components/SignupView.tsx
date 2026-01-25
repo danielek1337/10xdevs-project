@@ -14,14 +14,16 @@
  * - Accessibility (ARIA labels, error announcements)
  */
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
-import { cn } from "@/lib/utils";
+import { signupSchema } from "@/lib/validators/auth.validator";
+import { storeAuthSession, hasValidSession } from "@/lib/utils/session.utils";
+import type { SignupResponseDTO, ErrorResponseDTO } from "@/types";
 
 interface SignupFormState {
   email: string;
@@ -29,6 +31,7 @@ interface SignupFormState {
   confirmPassword: string;
   isLoading: boolean;
   error: string | null;
+  requiresEmailConfirmation: boolean;
 }
 
 export default function SignupView() {
@@ -38,13 +41,21 @@ export default function SignupView() {
     confirmPassword: "",
     isLoading: false,
     error: null,
+    requiresEmailConfirmation: false,
   });
+
+  // Client-side auth check - redirect to dashboard if already logged in
+  useEffect(() => {
+    if (hasValidSession()) {
+      window.location.href = "/dashboard";
+    }
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setFormState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-    // Client-side validation
+    // Client-side validation - passwords match
     if (formState.password !== formState.confirmPassword) {
       setFormState((prev) => ({
         ...prev,
@@ -54,16 +65,84 @@ export default function SignupView() {
       return;
     }
 
-    // TODO: Implement API call to /api/auth/signup
-    // For now, just simulate loading
-    setTimeout(() => {
+    // Client-side validation with Zod
+    const validationResult = signupSchema.safeParse({
+      email: formState.email,
+      password: formState.password,
+    });
+
+    if (!validationResult.success) {
+      const errors = validationResult.error.flatten().fieldErrors;
+      const errorMessage = Object.values(errors).flat()[0] || "Validation failed";
       setFormState((prev) => ({
         ...prev,
         isLoading: false,
-        error: "Signup functionality will be implemented in the next phase",
+        error: errorMessage,
       }));
-    }, 1000);
+      return;
+    }
+
+    try {
+      // Call API endpoint
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formState.email,
+          password: formState.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const error: ErrorResponseDTO = await response.json();
+        throw new Error(error.error || "Signup failed");
+      }
+
+      const data: SignupResponseDTO = await response.json();
+
+      // Check if email confirmation is required
+      if ((data as any).requiresEmailConfirmation) {
+        setFormState((prev) => ({
+          ...prev,
+          isLoading: false,
+          requiresEmailConfirmation: true,
+        }));
+        return;
+      }
+
+      // Store session and redirect to dashboard
+      storeAuthSession(data.session, false);
+      window.location.href = "/dashboard";
+    } catch (error) {
+      setFormState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : "An unexpected error occurred",
+      }));
+    }
   };
+
+  // Email confirmation success state
+  if (formState.requiresEmailConfirmation) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">Check Your Email</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center text-muted-foreground mb-6">
+              We&apos;ve sent a confirmation link to <span className="font-medium text-foreground">{formState.email}</span>.
+              Please check your email and click the link to activate your account.
+            </p>
+            <Button asChild className="w-full">
+              <a href="/login">Go to Sign In</a>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">

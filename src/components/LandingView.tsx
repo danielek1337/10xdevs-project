@@ -10,10 +10,18 @@
  * - Modern, gradient background design
  */
 
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Activity, TrendingUp, Target, Shield } from "lucide-react";
+import { hasValidSession } from "@/lib/utils/session.utils";
 
 export default function LandingView() {
+  // Client-side auth check - redirect to dashboard if logged in
+  useEffect(() => {
+    if (hasValidSession()) {
+      window.location.href = "/dashboard";
+    }
+  }, []);
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900">
       {/* Hero Section */}
@@ -41,15 +49,14 @@ export default function LandingView() {
             <Button
               asChild
               size="lg"
-              className="w-full sm:w-auto bg-white text-purple-900 hover:bg-blue-50 shadow-lg"
+              className="w-full sm:w-auto bg-white text-purple-900 hover:bg-blue-50 shadow-lg font-semibold"
             >
               <a href="/signup">Get Started</a>
             </Button>
             <Button
               asChild
-              variant="outline"
               size="lg"
-              className="w-full sm:w-auto border-white text-white hover:bg-white/10 shadow-lg"
+              className="w-full sm:w-auto bg-transparent border-2 border-white text-white hover:bg-white hover:text-purple-900 shadow-lg font-semibold transition-all"
             >
               <a href="/login">Sign In</a>
             </Button>

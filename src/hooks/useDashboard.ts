@@ -25,6 +25,7 @@ import type {
   AntiSpamErrorResponseDTO,
   UserDTO,
 } from "@/types";
+import { getAuthToken } from "@/lib/utils/session.utils";
 
 /**
  * Build query string from filters object
@@ -86,15 +87,21 @@ export function useDashboard() {
    */
   const fetchUser = useCallback(async () => {
     try {
-      // TODO: Replace with actual auth endpoint when available
-      // For now, use mock data
-      const mockUser: UserDTO = {
-        id: "00000000-0000-0000-0000-000000000000",
-        email: "test@example.com",
-      };
-      setState((prev) => ({ ...prev, user: mockUser }));
+      const token = getAuthToken();
+      const response = await fetch("/api/auth/me", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user");
+      }
+
+      const user: UserDTO = await response.json();
+      setState((prev) => ({ ...prev, user }));
     } catch (error) {
       console.error("Error fetching user:", error);
+      // If fetching user fails, redirect to login
+      window.location.href = "/login";
     }
   }, []);
 
@@ -104,8 +111,11 @@ export function useDashboard() {
   const fetchEntries = useCallback(async () => {
     setState((prev) => ({ ...prev, isLoadingEntries: true, entriesError: null }));
     try {
+      const token = getAuthToken();
       const queryString = buildQueryString(state.filters);
-      const response = await fetch(`/api/entries?${queryString}`);
+      const response = await fetch(`/api/entries?${queryString}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch entries: ${response.status}`);
@@ -134,11 +144,14 @@ export function useDashboard() {
   const fetchFocusScores = useCallback(async () => {
     setState((prev) => ({ ...prev, isLoadingScores: true, scoresError: null }));
     try {
+      const token = getAuthToken();
       // Calculate date range (last 7 days)
       const dateTo = new Date().toISOString().split("T")[0];
       const dateFrom = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
-      const response = await fetch(`/api/focus-scores?date_from=${dateFrom}&date_to=${dateTo}`);
+      const response = await fetch(`/api/focus-scores?date_from=${dateFrom}&date_to=${dateTo}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
 
       if (!response.ok) {
         throw new Error(`Failed to fetch focus scores: ${response.status}`);
@@ -165,9 +178,13 @@ export function useDashboard() {
    */
   const createEntry = useCallback(
     async (data: CreateEntryDTO): Promise<EntryDTO> => {
+      const token = getAuthToken();
       const response = await fetch("/api/entries", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
         body: JSON.stringify(data),
       });
 
@@ -212,9 +229,13 @@ export function useDashboard() {
    */
   const updateEntry = useCallback(
     async (entryId: string, data: UpdateEntryDTO): Promise<EntryDTO> => {
+      const token = getAuthToken();
       const response = await fetch(`/api/entries/${entryId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
         body: JSON.stringify(data),
       });
 
@@ -243,8 +264,10 @@ export function useDashboard() {
    */
   const deleteEntry = useCallback(
     async (entryId: string): Promise<void> => {
+      const token = getAuthToken();
       const response = await fetch(`/api/entries/${entryId}`, {
         method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       if (!response.ok) {

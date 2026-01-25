@@ -4,17 +4,12 @@
  * 
  * Renders the registration form for new users.
  * 
- * Server-side features:
- * - TODO: Auth check (redirect authenticated users to dashboard)
+ * Features:
+ * - Client-side auth check in SignupView component
+ * - Redirects authenticated users to dashboard
  */
 import Layout from "@/layouts/Layout.astro";
 import SignupView from "@/components/SignupView";
-
-// TODO: Server-side auth check will be implemented in backend phase
-// const session = await Astro.locals.supabase.auth.getSession();
-// if (session?.data?.session) {
-//   return Astro.redirect('/dashboard');
-// }
 ---
 
 <Layout title="Sign Up - VibeCheck">

@@ -59,10 +59,11 @@ export interface LoginDTO {
 export interface UserDTO {
   id: string;
   email: string;
+  createdAt?: string;
 }
 
 /**
- * DTO: Session information with tokens
+ * DTO: Session information with tokens (basic)
  */
 export interface SessionDTO {
   access_token: string;
@@ -71,12 +72,34 @@ export interface SessionDTO {
 }
 
 /**
+ * DTO: Extended session information with tokens
+ * Used for client-side session storage
+ */
+export interface AuthSessionDTO {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  expires_at: number;
+  token_type?: string;
+}
+
+/**
  * DTO: Complete authentication response with user and session
  */
 export interface AuthResponseDTO {
   user: UserDTO;
-  session: SessionDTO;
+  session: AuthSessionDTO;
 }
+
+/**
+ * DTO: Login response (alias for AuthResponseDTO)
+ */
+export type LoginResponseDTO = AuthResponseDTO;
+
+/**
+ * DTO: Signup response (alias for AuthResponseDTO)
+ */
+export type SignupResponseDTO = AuthResponseDTO;
 
 /**
  * Command Model: Refresh token request

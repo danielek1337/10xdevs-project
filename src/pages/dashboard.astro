@@ -2,17 +2,20 @@
 /**
  * Dashboard Page - Main productivity tracking interface
  * 
- * This page requires authentication (checked via middleware)
+ * This page requires authentication.
  * Displays:
  * - Focus Score Widget with 7-day trend
  * - Entry creation form
  * - Paginated list of entries with filters
+ * 
+ * Features:
+ * - Client-side auth check in DashboardView component
+ * - Redirects unauthenticated users to login
  */
 
 import Layout from '@/layouts/Layout.astro';
 import DashboardView from '@/components/DashboardView';
 
-// Server-side auth check (middleware handles redirect)
 // TODO: Add server-side data fetching for initial state (optional)
 ---
 

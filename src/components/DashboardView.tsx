@@ -12,7 +12,7 @@
  * - Responsive layout
  */
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { PersistentHeader } from "./PersistentHeader";
 import { FocusScoreWidget } from "./FocusScoreWidget";
 import { EntryForm } from "./EntryForm";
@@ -23,8 +23,15 @@ import { EntryEditModal } from "./EntryEditModal";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 import { useDashboard } from "@/hooks/useDashboard";
 import type { EmptyStateType } from "@/types/dashboard.types";
+import { getAuthToken, clearAuthSession, hasValidSession } from "@/lib/utils/session.utils";
 
 export default function DashboardView() {
+  // Client-side auth check - redirect to login if not logged in
+  useEffect(() => {
+    if (!hasValidSession()) {
+      window.location.href = "/login?redirect=/dashboard";
+    }
+  }, []);
   const {
     state,
     todayScore,
@@ -49,12 +56,19 @@ export default function DashboardView() {
    */
   const handleLogout = useCallback(async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      const token = getAuthToken();
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      // Clear session
+      clearAuthSession();
       // Redirect to login
       window.location.href = "/login";
     } catch (error) {
       console.error("Logout error:", error);
-      // Force redirect anyway
+      // Clear session and force redirect anyway
+      clearAuthSession();
       window.location.href = "/login";
     }
   }, []);

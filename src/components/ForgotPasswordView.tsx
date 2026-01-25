@@ -13,13 +13,16 @@
  * - Accessibility (ARIA labels, error announcements)
  */
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 import { CheckCircle2 } from "lucide-react";
+import { forgotPasswordSchema } from "@/lib/validators/auth.validator";
+import { hasValidSession } from "@/lib/utils/session.utils";
+import type { MessageResponseDTO, ErrorResponseDTO } from "@/types";
 
 interface ForgotPasswordState {
   email: string;
@@ -36,19 +39,56 @@ export default function ForgotPasswordView() {
     success: false,
   });
 
+  // Client-side auth check - redirect to dashboard if already logged in
+  useEffect(() => {
+    if (hasValidSession()) {
+      window.location.href = "/dashboard";
+    }
+  }, []);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-    // TODO: Implement API call to /api/auth/forgot-password
-    // For now, just simulate loading
-    setTimeout(() => {
+    // Client-side validation
+    const validationResult = forgotPasswordSchema.safeParse({ email: state.email });
+
+    if (!validationResult.success) {
+      const errors = validationResult.error.flatten().fieldErrors;
+      const errorMessage = errors.email?.[0] || "Please enter a valid email address";
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }));
+      return;
+    }
+
+    try {
+      // Call API endpoint
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: state.email }),
+      });
+
+      if (!response.ok) {
+        const error: ErrorResponseDTO = await response.json();
+        throw new Error(error.error || "Failed to send reset link");
+      }
+
       setState((prev) => ({
         ...prev,
         isLoading: false,
         success: true,
       }));
-    }, 1000);
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : "An unexpected error occurred",
+      }));
+    }
   };
 
   // Success state

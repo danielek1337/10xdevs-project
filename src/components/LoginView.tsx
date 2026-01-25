@@ -13,14 +13,16 @@
  * - Accessibility (ARIA labels, error announcements)
  */
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
-import { cn } from "@/lib/utils";
+import { loginSchema } from "@/lib/validators/auth.validator";
+import { storeAuthSession, hasValidSession } from "@/lib/utils/session.utils";
+import type { LoginResponseDTO, ErrorResponseDTO } from "@/types";
 
 interface LoginViewProps {
   redirectTo?: string;
@@ -43,19 +45,66 @@ export default function LoginView({ redirectTo = "/dashboard" }: LoginViewProps)
     error: null,
   });
 
+  // Client-side auth check - redirect to dashboard if already logged in
+  useEffect(() => {
+    if (hasValidSession()) {
+      window.location.href = "/dashboard";
+    }
+  }, []);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setFormState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-    // TODO: Implement API call to /api/auth/login
-    // For now, just simulate loading
-    setTimeout(() => {
+    // Client-side validation
+    const validationResult = loginSchema.safeParse({
+      email: formState.email,
+      password: formState.password,
+      rememberMe: formState.rememberMe,
+    });
+
+    if (!validationResult.success) {
+      const errors = validationResult.error.flatten().fieldErrors;
+      const errorMessage = Object.values(errors).flat()[0] || "Validation failed";
       setFormState((prev) => ({
         ...prev,
         isLoading: false,
-        error: "Login functionality will be implemented in the next phase",
+        error: errorMessage,
       }));
-    }, 1000);
+      return;
+    }
+
+    try {
+      // Call API endpoint
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formState.email,
+          password: formState.password,
+          rememberMe: formState.rememberMe,
+        }),
+      });
+
+      if (!response.ok) {
+        const error: ErrorResponseDTO = await response.json();
+        throw new Error(error.error || "Login failed");
+      }
+
+      const data: LoginResponseDTO = await response.json();
+
+      // Store session
+      storeAuthSession(data.session, formState.rememberMe);
+
+      // Redirect to dashboard or specified URL
+      window.location.href = redirectTo;
+    } catch (error) {
+      setFormState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: error instanceof Error ? error.message : "An unexpected error occurred",
+      }));
+    }
   };
 
   return (
@@ -108,15 +157,10 @@ export default function LoginView({ redirectTo = "/dashboard" }: LoginViewProps)
               <Checkbox
                 id="remember-me"
                 checked={formState.rememberMe}
-                onCheckedChange={(checked) =>
-                  setFormState((prev) => ({ ...prev, rememberMe: !!checked }))
-                }
+                onCheckedChange={(checked) => setFormState((prev) => ({ ...prev, rememberMe: !!checked }))}
                 disabled={formState.isLoading}
               />
-              <Label
-                htmlFor="remember-me"
-                className="text-sm font-normal cursor-pointer"
-              >
+              <Label htmlFor="remember-me" className="text-sm font-normal cursor-pointer">
                 Remember me
               </Label>
             </div>
@@ -143,7 +187,7 @@ export default function LoginView({ redirectTo = "/dashboard" }: LoginViewProps)
               </a>
               <span className="hidden sm:inline">·</span>
               <span>
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <a
                   href="/signup"
                   className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
@@ -158,4 +202,3 @@ export default function LoginView({ redirectTo = "/dashboard" }: LoginViewProps)
     </div>
   );
 }
-

@@ -26,6 +26,7 @@ import { validateEntryForm, hasValidationErrors } from "@/lib/utils/dashboard.ut
 import type { EntryFormData, EntryFormErrors, MoodValue, AntiSpamState } from "@/types/dashboard.types";
 import type { EntryDTO, CreateEntryDTO } from "@/types";
 import { cn } from "@/lib/utils";
+import { getAuthToken } from "@/lib/utils/session.utils";
 
 interface EntryFormProps {
   /** Callback when entry is successfully created */
@@ -74,8 +75,9 @@ export function EntryForm({ onSuccess, antiSpam, onAntiSpamExpire, className }: 
     }
 
     // Prepare API payload
+    // At this point mood is guaranteed to be non-null due to validation
     const payload: CreateEntryDTO = {
-      mood: formData.mood!,
+      mood: formData.mood as number,
       task: formData.task.trim(),
       notes: formData.notes.trim() || undefined,
       tags: formData.tags.length > 0 ? formData.tags : undefined,
@@ -84,9 +86,13 @@ export function EntryForm({ onSuccess, antiSpam, onAntiSpamExpire, className }: 
     setIsSubmitting(true);
 
     try {
+      const token = getAuthToken();
       const response = await fetch("/api/entries", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
         body: JSON.stringify(payload),
       });
 
@@ -140,8 +146,8 @@ export function EntryForm({ onSuccess, antiSpam, onAntiSpamExpire, className }: 
       setErrors((prev) => ({ ...prev, [field]: validationErrors[field] }));
     } else {
       setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [field]: _removed, ...newErrors } = prev;
         return newErrors;
       });
     }
