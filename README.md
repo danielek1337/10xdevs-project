@@ -6,14 +6,25 @@ A productivity tracking application that helps developers monitor their flow sta
 
 ## Tech Stack
 
+### Core Technologies
+
 - [Astro](https://astro.build/) v5.5.5 - Modern web framework for building fast, content-focused websites
 - [React](https://react.dev/) v19.0.0 - UI library for building interactive components
 - [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
 - [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
 - [Supabase](https://supabase.com/) - Authentication, database, and row-level security
 - [Shadcn/ui](https://ui.shadcn.com/) - Re-usable UI components
-- [Playwright](https://playwright.dev/) - End-to-end testing
-- [Vitest](https://vitest.dev/) - Unit testing
+
+### Testing Technologies
+
+#### Unit & Component Testing
+- [Vitest](https://vitest.dev/) - Fast unit test framework compatible with Vite/Astro ecosystem
+- [React Testing Library](https://testing-library.com/react) - Testing React components with user-centric approach
+- [@testing-library/user-event](https://testing-library.com/docs/user-event/intro) - User interaction simulation in component tests
+- [MSW (Mock Service Worker)](https://mswjs.io/) - API mocking at the network level for testing edge cases
+
+#### End-to-End Testing
+- [Playwright](https://playwright.dev/) - E2E testing framework with multi-browser support
 
 ## Prerequisites
 
@@ -80,6 +91,28 @@ npm run build
 - `npm run lint:fix` - Fix ESLint issues
 - `npm run test` - Run unit tests with Vitest
 - `npm run test:e2e` - Run end-to-end tests with Playwright
+
+## Testing Strategy
+
+VibeCheck uses a comprehensive testing approach to ensure code quality and reliability:
+
+### Unit & Integration Tests (Vitest)
+- **Business Logic:** Testing functions for focus score calculation, validators, and utilities
+- **React Components:** Testing UI components with React Testing Library
+- **API Integration:** Testing API communication with MSW (Mock Service Worker) for mocked responses
+- Test coverage includes edge cases, error handling, and user interactions
+
+### End-to-End Tests (Playwright)
+- **User Journeys:** Complete authentication flows (signup, login, logout)
+- **CRUD Operations:** Creating, reading, updating, and deleting productivity entries
+- **Data Isolation:** Ensuring users can only access their own data (RLS verification)
+- **Cross-browser:** Testing across multiple browsers for compatibility
+
+Run tests with:
+```bash
+npm run test              # Unit & integration tests
+npm run test:e2e          # E2E tests
+```
 
 ## Project Structure
 

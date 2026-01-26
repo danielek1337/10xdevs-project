@@ -1,0 +1,28 @@
+---
+description: Core rules for e2e testing using playwright
+globs: 
+alwaysApply: true
+---
+
+# AI Rules for VibeCheck
+
+VibeCheck is a productivity tracking application that helps developers monitor their flow state and productivity levels throughout the day. Users can log their mood, tasks, and focus levels, with automatic calculation of daily productivity metrics.
+
+## TESTING
+
+### Guidelines for E2E
+
+#### PLAYWRIGHT
+
+- Initialize configuration only with Chromium/Desktop Chrome browser
+- Use browser contexts for isolating test environments
+- Implement the Page Object Model for maintainable tests
+- Use locators for resilient element selection
+- Leverage API testing for backend validation
+- Implement visual comparison with expect(page).toHaveScreenshot()
+- Use the codegen tool for test recording
+- Leverage trace viewer for debugging test failures
+- Implement test hooks for setup and teardown
+- Use expect assertions with specific matchers
+- Leverage parallel execution for faster test runs
+
