@@ -83,4 +83,8 @@ export default defineConfig({
 
   // Output directory for test artifacts
   outputDir: "playwright-results/",
+
+  // Global setup and teardown
+  globalSetup: "./e2e/setup/global-setup.ts",
+  globalTeardown: "./e2e/setup/global-teardown.ts",
 });

@@ -130,7 +130,6 @@ export function EntryForm({ onSuccess, antiSpam, onAntiSpamExpire, className }: 
       setErrors({});
       onSuccess(entry);
     } catch (error) {
-      console.error("Error creating entry:", error);
       setServerError(error instanceof Error ? error.message : "Wystąpił błąd podczas tworzenia wpisu");
     } finally {
       setIsSubmitting(false);

@@ -4,7 +4,7 @@
 
 A complete, production-ready REST API endpoint for creating productivity entries with:
 - Full input validation (Zod schemas)
-- Anti-spam protection (1 entry/hour per user)
+- Anti-spam protection (1 entry/5 minutes per user)
 - Automatic tag management
 - Comprehensive error handling
 - Authentication middleware
@@ -83,7 +83,7 @@ Response (201 Created with EntryDTO)
 ```
 
 ### Anti-Spam Protection
-- **Rule:** Maximum 1 entry per user per hour (UTC)
+- **Rule:** Maximum 1 entry per user per 5 minutes (UTC)
 - **Implementation:** Database UNIQUE constraint + service-level check
 - **Response:** 409 Conflict with `retry_after` timestamp
 

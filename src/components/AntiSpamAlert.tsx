@@ -1,7 +1,7 @@
 /**
  * AntiSpamAlert Component
  *
- * Displays a warning alert when anti-spam is active (user tried to create more than 1 entry per hour).
+ * Displays a warning alert when anti-spam is active (user tried to create more than 1 entry per 5 minutes).
  * Shows countdown timer until the user can create another entry.
  *
  * Features:
@@ -32,7 +32,7 @@ export function AntiSpamAlert({ retryAfter, currentEntryCreatedAt, onExpire }: A
       <AlertTitle className="text-orange-900 dark:text-orange-100">Limit wpisów osiągnięty</AlertTitle>
       <AlertDescription className="text-orange-800 dark:text-orange-200">
         <p>
-          Możesz tworzyć tylko <strong>1 wpis na godzinę</strong>.
+          Możesz tworzyć tylko <strong>1 wpis co 5 minut</strong>.
           {currentEntryCreatedAt && (
             <>
               {" "}

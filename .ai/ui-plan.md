@@ -141,7 +141,7 @@ Struktura zaprojektowana jest z uwzględnieniem:
   - **Anti-spam State**:
     - Gdy 409 Conflict: Disable całego form
     - `CountdownTimer` do `retry_after`
-    - `Alert` z informacją "Możesz stworzyć tylko 1 wpis na godzinę"
+    - `Alert` z informacją "Możesz stworzyć tylko 1 wpis co 5 minut"
 
 **Bottom Section (Full Width):**
 - `EntriesSection`

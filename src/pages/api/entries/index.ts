@@ -97,7 +97,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
  * Create a new productivity entry
  *
  * Authentication: Required (Bearer token)
- * Rate Limiting: 1 entry per hour per user (anti-spam)
+ * Rate Limiting: 1 entry per 5 minutes per user (anti-spam)
  *
  * Request Body:
  * - mood: number (1-5, required)

@@ -2,7 +2,7 @@
 
 ## 1. Przegląd punktu końcowego
 
-Endpoint `POST /api/entries` umożliwia zalogowanym użytkownikom tworzenie nowych wpisów produktywności. Wpis zawiera ocenę nastroju (mood), opis zadania (task), opcjonalne notatki oraz opcjonalne tagi. System automatycznie egzekwuje regułę anti-spam (maksymalnie jeden wpis na godzinę dla użytkownika) oraz waliduje wszystkie dane  wejściowe zgodnie z ograniczeniami biznesowymi i bazodanowymi.
+Endpoint `POST /api/entries` umożliwia zalogowanym użytkownikom tworzenie nowych wpisów produktywności. Wpis zawiera ocenę nastroju (mood), opis zadania (task), opcjonalne notatki oraz opcjonalne tagi. System automatycznie egzekwuje regułę anti-spam (maksymalnie jeden wpis co 5 minut dla użytkownika) oraz waliduje wszystkie dane  wejściowe zgodnie z ograniczeniami biznesowymi i bazodanowymi.
 
 **Kluczowe funkcjonalności:**
 - Tworzenie wpisu produktywności z oceną nastroju, opisem zadania i opcjonalnymi notatkami
@@ -215,7 +215,7 @@ const createEntrySchema = z.object({
 
 ```json
 {
-  "error": "You can only create one entry per hour",
+  "error": "You can only create one entry every 5 minutes",
   "code": "ANTI_SPAM_VIOLATION",
   "retry_after": "2026-01-18T11:00:00Z",
   "details": {
@@ -460,7 +460,7 @@ Response to Client (201 with EntryDTO)
 ### Zapobieganie atakom
 
 #### Anti-Spam Protection
-- **Reguła:** Maksymalnie 1 wpis na użytkownika na godzinę (UTC)
+- **Reguła:** Maksymalnie 1 wpis na użytkownika co 5 minut (UTC)
 - **Implementacja:** UNIQUE constraint + API-level check
 - **Response:** 409 Conflict z `retry_after` timestamp
 - **Note:** Soft-delete NIE zwalnia slotu (zgodnie z db-plan)
@@ -599,7 +599,7 @@ if (existingEntry) {
   throw {
     status: 409,
     code: 'ANTI_SPAM_VIOLATION',
-    error: 'You can only create one entry per hour',
+    error: 'You can only create one entry every 5 minutes',
     retry_after: retryAfter.toISOString(),
     details: {
       current_entry_created_at: existingEntry.created_at,
@@ -1223,7 +1223,7 @@ export class EntriesService {
     retryAfter.setUTCHours(retryAfter.getUTCHours() + 1);
 
     return {
-      error: 'You can only create one entry per hour',
+      error: 'You can only create one entry every 5 minutes',
       code: 'ANTI_SPAM_VIOLATION',
       retry_after: retryAfter.toISOString(),
       details: {

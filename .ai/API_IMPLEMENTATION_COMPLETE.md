@@ -39,7 +39,7 @@ Czas implementacji: ~30 minut
 - `tags`: string[] (optional)
 
 **Odpowiedź:** EntryDTO  
-**Anti-spam:** Max 1 wpis na godzinę (409 Conflict)
+**Anti-spam:** Max 1 wpis co 5 minut (409 Conflict)
 
 ---
 
@@ -290,7 +290,7 @@ Jeśli nie istnieje, utwórz go:
 ✅ Frontend Complete (25+ plików, 3500+ LOC)  
 ✅ Backend Complete (8 endpoints, 3 serwisy)  
 ✅ CRUD Operations (Create, Read, Update, Delete)  
-✅ Anti-spam Protection (1 wpis/godzinę)  
+✅ Anti-spam Protection (1 wpis/5 minut)  
 ✅ Filtering & Sorting (mood, tags, search, dates)  
 ✅ Pagination (20 wpisów/stronę)  
 ✅ Focus Score Calculations (via database view)  

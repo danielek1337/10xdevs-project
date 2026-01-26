@@ -7,7 +7,7 @@
 - **Entries** (`/api/entries`) - Maps to `public.entries` table
   - Represents individual productivity log entries with mood, task, and notes
   - Supports soft delete via `deleted_at` field
-  - Enforces anti-spam rule (1 entry per hour per user)
+  - Enforces anti-spam rule (1 entry per 5 minutes per user)
 
 - **Tags** (`/api/tags`) - Maps to `public.tags` table
   - Global catalog of available tags (shared across all users)
@@ -299,7 +299,7 @@ Creates a new productivity entry.
 - `409 Conflict` - Anti-spam violation (already created entry this hour)
   ```json
   {
-    "error": "You can only create one entry per hour",
+    "error": "You can only create one entry every 5 minutes",
     "code": "ANTI_SPAM_VIOLATION",
     "retry_after": "2026-01-18T11:00:00Z"
   }
@@ -718,15 +718,15 @@ Database-level authorization enforced via Supabase RLS policies:
 **Business Rules:**
 
 1. **Anti-Spam Protection:**
-   - Constraint: Maximum 1 entry per user per hour (UTC)
-   - Enforced by: Database unique constraint on `(user_id, created_hour_utc)`
+   - Constraint: Maximum 1 entry per user per 5 minutes (enforced in application layer)
+   - Enforced by: Application layer validation (anti-spam.utils.ts)
    - Error response: 409 Conflict with `retry_after` timestamp
-   - Implementation: Trigger automatically calculates `created_hour_utc` from `created_at`
+   - Implementation: Validates time difference between entries is >= 5 minutes
 
 2. **Soft Delete:**
    - DELETE operation sets `deleted_at = now()`
    - Soft-deleted entries excluded from all queries via `WHERE deleted_at IS NULL`
-   - Soft-deleted entries DO NOT free up hourly slot (anti-spam still applies)
+   - Soft-deleted entries DO NOT free up 5-minute slot (anti-spam still applies)
    - Recovery endpoint not included in MVP
 
 3. **Timestamp Preservation:**
@@ -837,30 +837,30 @@ Database-level authorization enforced via Supabase RLS policies:
 
 **Implementation Details:**
 
-1. **Database-Level Protection:**
-   - Unique constraint: `(user_id, created_hour_utc)`
-   - Trigger: `set_entries_created_hour_utc()` runs BEFORE INSERT/UPDATE
-   - Calculation: `created_hour_utc = date_trunc('hour', created_at AT TIME ZONE 'UTC')`
+1. **Application-Level Protection:**
+   - Validation in `anti-spam.utils.ts`
+   - Checks if time difference between last entry and current time is >= 5 minutes
+   - Uses UTC timestamps for consistency
 
 2. **API-Level Handling:**
-   - Catch constraint violation error from database
-   - Transform to user-friendly 409 response
-   - Include `retry_after` timestamp: next available hour boundary in UTC
+   - Service layer validates before database insert
+   - Returns user-friendly 409 response on violation
+   - Include `retry_after` timestamp: 5 minutes after last entry
 
 3. **Edge Cases:**
-   - Soft-deleted entries still occupy hourly slot (by design)
-   - Update operations don't change `created_hour_utc` (preserves original slot)
-   - Timezone handled at database level (always UTC)
+   - Soft-deleted entries still count for anti-spam (by design)
+   - Update operations don't affect anti-spam (only creation time matters)
+   - All timestamps in UTC for consistency
 
 **Error Response Example:**
 ```json
 {
-  "error": "You can only create one entry per hour",
+  "error": "You can only create one entry every 5 minutes",
   "code": "ANTI_SPAM_VIOLATION",
   "retry_after": "2026-01-18T11:00:00Z",
   "details": {
     "current_entry_created_at": "2026-01-18T10:45:00Z",
-    "hour_bucket": "2026-01-18T10:00:00Z"
+    "last_entry_created_at": "2026-01-18T10:45:00Z"
   }
 }
 ```

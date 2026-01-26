@@ -9,7 +9,7 @@
 --   - public.entry_tags: Many-to-many relationship between entries and tags
 --
 -- Features:
---   - Anti-spam: 1 entry per user per hour (UTC)
+--   - Anti-spam: 1 entry per user per 5 minutes (enforced in application layer)
 --   - Soft-delete: entries marked as deleted but not removed
 --   - Row Level Security: Users can only access their own data
 --   - Auto-timestamps: created_at and updated_at managed by triggers
@@ -24,7 +24,7 @@
 -- Table: public.entries
 -- Description: Stores individual productivity log entries for users
 -- Soft-delete: Uses deleted_at column to mark deleted entries
--- Anti-spam: Enforced via unique constraint on (user_id, created_hour_utc)
+-- Anti-spam: Enforced in application layer (1 entry per 5 minutes per user)
 -- ----------------------------------------------------------------------------
 create table public.entries (
   id uuid primary key default gen_random_uuid() not null,
@@ -50,25 +50,16 @@ create table public.entries (
   -- soft-delete timestamp (null = active, non-null = deleted)
   deleted_at timestamptz null,
   
-  -- hour bucket in utc for anti-spam validation (1 entry per user per hour)
-  -- this field is automatically set by trigger before insert/update
-  created_hour_utc timestamp without time zone not null,
-  
   -- constraints
   constraint entries_mood_range_check check (mood between 1 and 5),
-  constraint entries_task_min_length_check check (char_length(btrim(task)) >= 3),
-  
-  -- anti-spam: only one entry per user per hour in utc
-  -- note: soft-delete does not free up the slot (by design)
-  constraint entries_user_hour_unique unique (user_id, created_hour_utc)
+  constraint entries_task_min_length_check check (char_length(btrim(task)) >= 3)
 );
 
 -- enable row level security on entries table
 alter table public.entries enable row level security;
 
 -- add comment to table
-comment on table public.entries is 'User productivity entries with soft-delete and anti-spam protection';
-comment on column public.entries.created_hour_utc is 'UTC hour bucket for anti-spam validation (automatically set by trigger)';
+comment on table public.entries is 'User productivity entries with soft-delete and application-layer anti-spam (5 min cooldown)';
 comment on column public.entries.deleted_at is 'Soft-delete timestamp. NULL = active entry, non-NULL = deleted entry';
 
 -- ----------------------------------------------------------------------------
@@ -145,25 +136,6 @@ $$;
 
 comment on function public.set_entries_updated_at() is 'Trigger function to automatically update the updated_at timestamp';
 
--- ----------------------------------------------------------------------------
--- Function: set_entries_created_hour_utc()
--- Description: Sets the created_hour_utc field for anti-spam validation
--- Calculates UTC hour bucket from created_at timestamp
--- ----------------------------------------------------------------------------
-create or replace function public.set_entries_created_hour_utc()
-returns trigger
-language plpgsql
-as $$
-begin
-  -- calculate utc hour bucket from created_at
-  -- this truncates to the hour in utc for anti-spam validation
-  new.created_hour_utc = date_trunc('hour', new.created_at at time zone 'UTC');
-  return new;
-end;
-$$;
-
-comment on function public.set_entries_created_hour_utc() is 'Trigger function to set UTC hour bucket for anti-spam validation';
-
 -- ============================================================================
 -- SECTION 3: TRIGGERS
 -- ============================================================================
@@ -176,16 +148,6 @@ create trigger set_entries_updated_at_trigger
   before update on public.entries
   for each row
   execute function public.set_entries_updated_at();
-
--- ----------------------------------------------------------------------------
--- Trigger: set_entries_created_hour_utc_trigger
--- Description: Calls set_entries_created_hour_utc() before insert
--- Ensures created_hour_utc is always set correctly for anti-spam validation
--- ----------------------------------------------------------------------------
-create trigger set_entries_created_hour_utc_trigger
-  before insert on public.entries
-  for each row
-  execute function public.set_entries_created_hour_utc();
 
 -- ============================================================================
 -- SECTION 4: INDEXES

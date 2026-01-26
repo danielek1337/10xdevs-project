@@ -307,11 +307,11 @@ interface TagsComboboxProps {
 
 ### 4.8 AntiSpamAlert
 
-**Opis**: Alert wyświetlany gdy użytkownik próbuje stworzyć więcej niż 1 wpis na godzinę. Zawiera countdown timer do czasu odblokowania.
+**Opis**: Alert wyświetlany gdy użytkownik próbuje stworzyć więcej niż 1 wpis co 5 minut. Zawiera countdown timer do czasu odblokowania.
 
 **Główne elementy**:
 - `Alert` (Shadcn) - variant "warning"
-- Komunikat: "Możesz stworzyć tylko 1 wpis na godzinę"
+- Komunikat: "Możesz stworzyć tylko 1 wpis co 5 minut"
 - `CountdownTimer` - pokazuje pozostały czas
 
 **Obsługiwane zdarzenia**:
@@ -1758,7 +1758,7 @@ try {
 
 **Komponent**: `EntryForm`
 
-**Warunek**: Maksymalnie 1 wpis na godzinę na użytkownika
+**Warunek**: Maksymalnie 1 wpis co 5 minut na użytkownika
 
 **Moment sprawdzenia**: Po submit formularza, na backendzie
 
@@ -1767,7 +1767,7 @@ try {
 **Wpływ na UI**:
 1. Dezaktywacja całego formularza (disabled na wszystkich polach i przycisku)
 2. Wyświetlenie `AntiSpamAlert` z komunikatem:
-   - "Możesz stworzyć tylko 1 wpis na godzinę"
+   - "Możesz stworzyć tylko 1 wpis co 5 minut"
    - Informacja o ostatnim wpisie: `current_entry_created_at`
    - Countdown timer do `retry_after`
 3. Automatyczna reaktywacja po upływie `retry_after`
@@ -1909,13 +1909,13 @@ try {
 
 #### 4. **409 Conflict - Anti-spam Violation**
 
-**Przyczyna**: Użytkownik próbuje stworzyć więcej niż 1 wpis na godzinę
+**Przyczyna**: Użytkownik próbuje stworzyć więcej niż 1 wpis co 5 minut
 
 **Odpowiedź**: `AntiSpamErrorResponseDTO`
 
 ```typescript
 {
-  "error": "You can only create one entry per hour",
+  "error": "You can only create one entry every 5 minutes",
   "code": "ANTI_SPAM_VIOLATION",
   "retry_after": "2026-01-18T11:00:00Z",
   "details": {
@@ -1928,7 +1928,7 @@ try {
 **Obsługa**:
 - Dezaktywacja formularza (disabled)
 - Wyświetlenie `AntiSpamAlert` z:
-  - Komunikatem głównym: "Możesz stworzyć tylko 1 wpis na godzinę"
+  - Komunikatem głównym: "Możesz stworzyć tylko 1 wpis co 5 minut"
   - Info o ostatnim wpisie: "Ostatni wpis został utworzony o {time}"
   - Countdown timer do `retry_after`
 - Automatyczne wyczyszczenie stanu po upływie czasu

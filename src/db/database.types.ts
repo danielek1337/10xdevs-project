@@ -23,7 +23,6 @@ export interface Database {
       entries: {
         Row: {
           created_at: string;
-          created_hour_utc: string;
           deleted_at: string | null;
           id: string;
           mood: number;
@@ -34,7 +33,6 @@ export interface Database {
         };
         Insert: {
           created_at?: string;
-          created_hour_utc: string;
           deleted_at?: string | null;
           id?: string;
           mood: number;
@@ -45,7 +43,6 @@ export interface Database {
         };
         Update: {
           created_at?: string;
-          created_hour_utc?: string;
           deleted_at?: string | null;
           id?: string;
           mood?: number;

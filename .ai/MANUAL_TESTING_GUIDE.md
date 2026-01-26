@@ -61,7 +61,7 @@ npm run dev
 
 ### ✅ Scenario 3: Anti-Spam Protection
 
-**Cel:** Sprawdzić mechanizm anti-spam (max 1 wpis na godzinę)
+**Cel:** Sprawdzić mechanizm anti-spam (max 1 wpis co 5 minut)
 
 1. Po utworzeniu wpisu, spróbuj od razu utworzyć kolejny
 2. Wypełnij formularz i kliknij "Stwórz wpis"

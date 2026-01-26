@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "../../db/supabase.client";
 import type { CreateEntryDTO, EntryDTO, AntiSpamErrorResponseDTO, EntryEntity, TagEntity } from "../../types";
 import { TagsService } from "./tags.service";
+import { validateAntiSpam } from "../utils/anti-spam.utils";
 
 /**
  * Type for database result with nested tags
@@ -32,34 +33,27 @@ export class EntriesService {
    * Create a new productivity entry
    *
    * Business logic flow:
-   * 1. Calculate created_hour_utc for anti-spam check
-   * 2. Verify anti-spam rule (1 entry per hour per user)
-   * 3. Resolve tag names to tag IDs (create new tags if needed)
-   * 4. Insert entry into database
-   * 5. Create entry-tag associations
-   * 6. Fetch complete entry with tags
-   * 7. Transform to EntryDTO
+   * 1. Verify anti-spam rule (1 entry per 5 minutes per user)
+   * 2. Resolve tag names to tag IDs (create new tags if needed)
+   * 3. Insert entry into database
+   * 4. Create entry-tag associations
+   * 5. Fetch complete entry with tags
+   * 6. Transform to EntryDTO
    *
    * @param userId - User ID from authentication context
    * @param data - Entry data from validated request body
    * @returns Complete entry with tags
-   * @throws AntiSpamErrorResponseDTO if user already created entry this hour
+   * @throws AntiSpamErrorResponseDTO if user already created entry in last 5 minutes
    * @throws Error for other database or processing errors
    */
   async createEntry(userId: string, data: CreateEntryDTO): Promise<EntryDTO> {
-    // Step 1: Calculate created_hour_utc for anti-spam
-    const now = new Date();
-    const createdHourUtc = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), 0, 0, 0)
-    ).toISOString();
+    // Step 1: Anti-spam check (5 minutes cooldown)
+    await this.checkAntiSpam(userId);
 
-    // Step 2: Anti-spam check
-    await this.checkAntiSpam(userId, createdHourUtc);
-
-    // Step 3: Resolve tags to tag IDs
+    // Step 2: Resolve tags to tag IDs
     const tagIds = data.tags && data.tags.length > 0 ? await this.tagsService.resolveTagIds(data.tags) : [];
 
-    // Step 4: Create entry in database
+    // Step 3: Create entry in database
     const { data: entry, error: entryError } = await this.supabase
       .from("entries")
       .insert({
@@ -67,16 +61,11 @@ export class EntriesService {
         mood: data.mood,
         task: data.task,
         notes: data.notes ?? null, // Convert undefined to null for database
-        created_hour_utc: createdHourUtc, // Required by TypeScript (database types)
       })
       .select()
       .single();
 
     if (entryError) {
-      // Check if it's anti-spam constraint violation (fallback)
-      if (entryError.code === "23505" && entryError.message.includes("user_id_created_hour_utc")) {
-        throw await this.buildAntiSpamError(userId, createdHourUtc);
-      }
       throw new Error(`Failed to create entry: ${entryError.message}`);
     }
 
@@ -107,70 +96,56 @@ export class EntriesService {
   }
 
   /**
-   * Check if user already created an entry in this hour (UTC)
+   * Check if user already created an entry in the last 5 minutes
    *
-   * Anti-spam rule: Maximum 1 entry per hour per user
-   * Uses created_hour_utc column which is truncated to hour bucket
+   * Anti-spam rule: Maximum 1 entry per 5 minutes per user
+   * Uses application-layer validation with anti-spam.utils
    *
    * @param userId - User ID to check
-   * @param createdHourUtc - Hour bucket timestamp (ISO 8601)
-   * @throws AntiSpamErrorResponseDTO if entry exists
+   * @throws AntiSpamErrorResponseDTO if entry was created within last 5 minutes
    */
-  private async checkAntiSpam(userId: string, createdHourUtc: string): Promise<void> {
-    const { data: existingEntry } = await this.supabase
+  private async checkAntiSpam(userId: string): Promise<void> {
+    // Fetch the most recent entry for this user
+    const { data: lastEntry } = await this.supabase
       .from("entries")
-      .select("id, created_at, created_hour_utc")
+      .select("created_at")
       .eq("user_id", userId)
-      .eq("created_hour_utc", createdHourUtc)
       .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
-    if (existingEntry) {
-      throw await this.buildAntiSpamError(userId, createdHourUtc, existingEntry);
+    // If no previous entry, user can create
+    if (!lastEntry) {
+      return;
+    }
+
+    // Validate using anti-spam utils (5 minute cooldown)
+    const now = new Date().toISOString();
+    const validation = validateAntiSpam(lastEntry.created_at, now);
+
+    if (!validation.canCreate) {
+      throw this.buildAntiSpamError(lastEntry.created_at, validation.retryAfter!);
     }
   }
 
   /**
    * Build anti-spam error response with retry information
    *
-   * Calculates retry_after timestamp (next hour) and includes
-   * details about the existing entry
-   *
-   * @param userId - User ID
-   * @param createdHourUtc - Current hour bucket
-   * @param existingEntry - Optional existing entry data
+   * @param lastEntryCreatedAt - Timestamp of last entry
+   * @param retryAfter - Timestamp when user can create next entry
    * @returns AntiSpamErrorResponseDTO with retry information
    */
-  private async buildAntiSpamError(
-    userId: string,
-    createdHourUtc: string,
-    existingEntry?: { created_at: string; created_hour_utc: string }
-  ): Promise<AntiSpamErrorResponseDTO> {
-    // Calculate retry_after: next hour after current hour bucket
-    const retryAfter = new Date(createdHourUtc);
-    retryAfter.setUTCHours(retryAfter.getUTCHours() + 1);
-
-    // If existingEntry not provided, fetch it for details
-    let entryCreatedAt = existingEntry?.created_at || "";
-    if (!existingEntry) {
-      const { data } = await this.supabase
-        .from("entries")
-        .select("created_at")
-        .eq("user_id", userId)
-        .eq("created_hour_utc", createdHourUtc)
-        .is("deleted_at", null)
-        .maybeSingle();
-
-      entryCreatedAt = data?.created_at || createdHourUtc;
-    }
-
+  private buildAntiSpamError(
+    lastEntryCreatedAt: string,
+    retryAfter: string
+  ): AntiSpamErrorResponseDTO {
     return {
-      error: "You can only create one entry per hour",
+      error: "You can only create one entry every 5 minutes",
       code: "ANTI_SPAM_VIOLATION",
-      retry_after: retryAfter.toISOString(),
+      retry_after: retryAfter,
       details: {
-        current_entry_created_at: entryCreatedAt,
-        hour_bucket: createdHourUtc,
+        current_entry_created_at: lastEntryCreatedAt,
       },
     };
   }

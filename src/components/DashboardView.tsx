@@ -1,8 +1,8 @@
 /**
  * DashboardView Component
- * 
+ *
  * Main dashboard view component that orchestrates all dashboard functionality.
- * 
+ *
  * Features:
  * - Persistent header with user menu
  * - Two-column layout (Focus Score + Entry Form)
@@ -36,8 +36,6 @@ export default function DashboardView() {
     state,
     todayScore,
     trendData,
-    createEntry,
-    updateEntry,
     deleteEntry,
     setFilters,
     clearFilters,
@@ -65,8 +63,7 @@ export default function DashboardView() {
       clearAuthSession();
       // Redirect to login
       window.location.href = "/login";
-    } catch (error) {
-      console.error("Logout error:", error);
+    } catch {
       // Clear session and force redirect anyway
       clearAuthSession();
       window.location.href = "/login";
@@ -149,9 +146,10 @@ export default function DashboardView() {
           {/* Entry Form */}
           <div id="entry-form">
             <EntryForm
-              onSuccess={(entry) => {
-                console.log("Entry created:", entry);
-                // Entry is already added via useDashboard
+              onSuccess={async () => {
+                // Refresh entries list and focus scores to show the new entry
+                await refreshEntries();
+                await refreshScores();
               }}
               antiSpam={state.antiSpam}
               onAntiSpamExpire={clearAntiSpam}
@@ -164,11 +162,7 @@ export default function DashboardView() {
           <h2 className="text-2xl font-bold">Twoje wpisy</h2>
 
           {/* Filters */}
-          <FilterBar
-            filters={state.filters}
-            onFiltersChange={setFilters}
-            onClearFilters={clearFilters}
-          />
+          <FilterBar filters={state.filters} onFiltersChange={setFilters} onClearFilters={clearFilters} />
 
           {/* Entries List */}
           <EntriesList
@@ -193,8 +187,7 @@ export default function DashboardView() {
       <EntryEditModal
         entry={state.editingEntry}
         onClose={closeEditModal}
-        onSuccess={async (updatedEntry) => {
-          console.log("Entry updated:", updatedEntry);
+        onSuccess={async () => {
           // Refresh entries list and scores to show updated data
           await refreshEntries();
           await refreshScores();
@@ -214,4 +207,3 @@ export default function DashboardView() {
     </div>
   );
 }
-

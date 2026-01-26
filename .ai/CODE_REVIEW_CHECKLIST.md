@@ -173,7 +173,7 @@
 
 #### Server-side
 - [x] API endpoints validate with Zod schemas
-- [x] Anti-spam logic (1 entry per hour)
+- [x] Anti-spam logic (1 entry per 5 minutes)
 
 ---
 

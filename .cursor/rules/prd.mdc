@@ -71,7 +71,7 @@ VibeCheck is a productivity tracking application that helps developers monitor t
 - Score should be recalculated when entries are added/updated/deleted
 
 #### Validation Rules
-- Anti-spam: Maximum one entry per hour per user
+- Anti-spam: Maximum one entry per 5 minutes per user
 - Mood rating must be between 1-5
 - Task description required (min 3 characters)
 - Tags must follow allowed format (alphanumeric, max 20 chars each)

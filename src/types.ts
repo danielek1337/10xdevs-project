@@ -401,7 +401,6 @@ export interface AntiSpamErrorResponseDTO extends ErrorResponseDTO {
   retry_after: string; // ISO 8601 timestamp
   details: {
     current_entry_created_at: string;
-    hour_bucket: string;
   };
 }
 
@@ -410,12 +409,11 @@ export interface AntiSpamErrorResponseDTO extends ErrorResponseDTO {
 // =============================================================================
 
 /**
- * Command Model: Internal entry creation with computed fields
+ * Command Model: Internal entry creation with user context
  * Extends CreateEntryDTO with user_id for service layer
  */
 export interface CreateEntryCommand extends CreateEntryDTO {
   user_id: string;
-  created_hour_utc: string; // Computed field for anti-spam
 }
 
 /**
