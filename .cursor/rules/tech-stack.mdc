@@ -1,0 +1,280 @@
+---
+description: Technology Stack for VibeCheck Application
+globs:
+alwaysApply: false
+---
+# VibeCheck Technology Stack
+
+This document describes the technologies used in the VibeCheck productivity tracking application and their specific roles in the project.
+
+## Frontend Framework
+
+### Astro 5
+- **Purpose**: Meta-framework for building the application
+- **Role**: Provides the foundation for server-side rendering (SSR), static site generation, and routing
+- **Key Features Used**:
+  - File-based routing in `./src/pages`
+  - Server-side rendering for improved performance
+  - API routes for backend endpoints (`./src/pages/api`)
+  - Middleware support for authentication
+  - Astro components for static content
+  - Integration with React for dynamic components
+
+### React 19
+- **Purpose**: UI library for building interactive components
+- **Role**: Powers all dynamic, client-side interactive elements
+- **Key Features Used**:
+  - Functional components with hooks
+  - State management with useState, useEffect
+  - Custom hooks for reusable logic (useCountdown, useDashboard, useDebounce, useRelativeTime)
+  - Client-side interactivity for forms, modals, and dynamic content
+  - Component composition for building complex UIs
+
+## Language
+
+### TypeScript 5
+- **Purpose**: Type-safe JavaScript superset
+- **Role**: Ensures type safety across the entire codebase
+- **Key Features Used**:
+  - Static type checking
+  - Interface definitions for entities and DTOs
+  - Type-safe API responses
+  - Enhanced IDE support and autocompletion
+  - Prevention of runtime type errors
+
+## Styling
+
+### Tailwind CSS 4
+- **Purpose**: Utility-first CSS framework
+- **Role**: Provides styling system for all UI components
+- **Key Features Used**:
+  - Utility classes for rapid UI development
+  - Responsive design with breakpoint variants
+  - Custom theme configuration
+  - JIT (Just-in-Time) compilation
+  - Dark mode support
+  - Consistent design system
+
+### Shadcn/ui
+- **Purpose**: Component library built on Radix UI
+- **Role**: Provides accessible, customizable UI components
+- **Key Components Used**:
+  - Alert & Alert Dialog for notifications and confirmations
+  - Button for interactive elements
+  - Card for content containers
+  - Dialog & Modal for overlay interactions
+  - Input, Textarea, Select for form controls
+  - Badge for tags and status indicators
+  - Dropdown Menu for user actions
+  - Command for searchable selections (TagsCombobox)
+- **Benefits**: 
+  - Built-in accessibility (WAI-ARIA compliant)
+  - Customizable with Tailwind CSS
+  - Copy-paste components (no npm dependency)
+
+## Backend & Database
+
+### Supabase
+- **Purpose**: Backend-as-a-Service (BaaS) platform
+- **Role**: Provides authentication, database, and security infrastructure
+- **Key Features Used**:
+  - **Authentication**: Email/Password authentication system
+  - **PostgreSQL Database**: Stores users, entries, tags, and focus scores
+  - **Row Level Security (RLS)**: Ensures users can only access their own data
+  - **Real-time subscriptions**: (Available for future features)
+  - **Auto-generated TypeScript types**: Type-safe database queries
+
+#### Database Schema
+- `profiles`: User profile information
+- `entries`: Productivity log entries with mood, task, and timestamp
+- `tags`: Categorization system for entries
+- `focus_scores`: Calculated daily productivity metrics
+- RLS policies enforcing user-level data isolation
+
+## Testing
+
+### Vitest
+- **Purpose**: Unit and component testing framework
+- **Role**: Tests business logic, utilities, calculations, and React components
+- **Test Coverage**:
+  - Daily Focus Score calculation
+  - Validation functions (anti-spam, mood range, task description)
+  - Data formatting utilities
+  - Business logic edge cases
+  - Custom hooks behavior
+  - React component logic and rendering
+- **Benefits**:
+  - Native ESM and TypeScript support
+  - Fast execution with Vite
+  - Jest-compatible API
+  - Built-in watch mode
+
+### React Testing Library
+- **Purpose**: React component testing library
+- **Role**: Tests React components with user-centric approach
+- **Test Coverage**:
+  - Component rendering and UI state
+  - User interactions (clicks, input, form submissions)
+  - Component props and state management
+  - Conditional rendering logic
+  - Custom hooks integration in components
+- **Benefits**:
+  - Tests components like users interact with them
+  - Encourages accessible UI patterns
+  - Works seamlessly with Vitest
+  - Better than testing implementation details
+
+### MSW (Mock Service Worker)
+- **Purpose**: API mocking library
+- **Role**: Intercepts and mocks network requests at network level
+- **Test Coverage**:
+  - API integration tests without real backend
+  - Error handling scenarios (404, 500, network errors)
+  - Edge cases (timeouts, slow responses)
+  - Authentication flows
+  - Data validation responses
+- **Benefits**:
+  - Same mocks for tests and development
+  - Network-level interception (no code changes)
+  - Works with any request library
+  - Enables testing without Supabase dependency
+
+### Playwright
+- **Purpose**: End-to-end testing framework
+- **Role**: Tests complete user workflows and integration
+- **Test Coverage**:
+  - Authentication flow (signup, login, logout)
+  - CRUD operations for productivity entries
+  - Dashboard functionality and data display
+  - User data isolation (RLS verification)
+  - Form validation and error handling
+  - Cross-browser compatibility
+- **Benefits**:
+  - Multi-browser support (Chromium, Firefox, WebKit)
+  - Auto-waiting for elements
+  - Built-in trace viewer for debugging
+  - Fast and reliable
+  - TypeScript-first
+
+## Development Tools
+
+### ESLint
+- **Purpose**: JavaScript/TypeScript linting
+- **Role**: Enforces code quality and consistency
+- **Configuration**: Custom rules for Astro, React, and TypeScript
+
+### npm
+- **Purpose**: Package manager
+- **Role**: Manages project dependencies and scripts
+
+## CI/CD & Deployment
+
+### GitHub Actions
+- **Purpose**: Continuous Integration/Continuous Deployment
+- **Role**: Automates testing and deployment pipeline
+- **Workflow Steps**:
+  1. Run unit tests (Vitest)
+  2. Run component tests (Vitest + React Testing Library)
+  3. Run integration tests with mocked API (Vitest + MSW)
+  4. Run E2E tests (Playwright)
+  5. TypeScript compilation check
+  6. ESLint code quality check
+  7. Generate test coverage reports
+  8. Deploy to Vercel (on main branch, if all checks pass)
+
+### Vercel
+- **Purpose**: Hosting and deployment platform
+- **Role**: Hosts the production application
+- **Features Used**:
+  - Automatic deployments from Git
+  - Preview deployments for pull requests
+  - Edge network for fast global delivery
+  - Serverless functions for API routes
+  - Environment variable management
+  - Built-in analytics and monitoring
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                         User Browser                         │
+├─────────────────────────────────────────────────────────────┤
+│  React Components (Dynamic UI) + Astro Components (Static)  │
+│                    Styled with Tailwind                      │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    Astro Server (SSR)                        │
+│  - Routing & Middleware                                      │
+│  - API Endpoints (/api/*)                                    │
+│  - Authentication checks                                     │
+└────────────────────────┬────────────────────────────────────┘
+                         │
+                         ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    Supabase Backend                          │
+│  - PostgreSQL Database                                       │
+│  - Authentication Service                                    │
+│  - Row Level Security                                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Technology Decision Rationale
+
+### Why Astro?
+- Excellent performance with minimal JavaScript shipped to client
+- Great developer experience with multiple framework support
+- Built-in SSR and API routes
+- Perfect for content-heavy applications with interactive components
+
+### Why React?
+- Industry-standard UI library with large ecosystem
+- Excellent for building complex interactive components
+- Rich hook ecosystem for state management
+- Strong TypeScript support
+
+### Why Supabase?
+- Rapid development with built-in auth and database
+- Excellent TypeScript support with auto-generated types
+- Row Level Security for data isolation
+- PostgreSQL provides robust relational database
+- No need to build custom backend infrastructure
+
+### Why Tailwind CSS?
+- Fast development with utility classes
+- Consistent design system
+- Small bundle size with JIT compilation
+- Easy to customize and extend
+- Works seamlessly with component libraries
+
+### Why Vercel?
+- Optimized for Astro deployment
+- Automatic CI/CD integration
+- Excellent performance and global CDN
+- Preview deployments for testing
+- Free tier suitable for development and small projects
+
+### Why this Testing Stack?
+**Vitest:**
+- Perfect fit for Vite/Astro ecosystem
+- Faster than Jest with better ESM support
+- Native TypeScript support
+
+**React Testing Library:**
+- Tests components from user perspective
+- Encourages accessibility best practices
+- Industry standard for React testing
+- Prevents testing implementation details
+
+**MSW:**
+- Network-level mocking without code changes
+- Same mocks for development and testing
+- Enables comprehensive API testing without backend dependency
+- Better than manually mocking fetch/axios
+
+**Playwright:**
+- Most modern and reliable E2E framework
+- Multi-browser testing out of the box
+- Excellent debugging tools
+- Faster and more stable than alternatives
