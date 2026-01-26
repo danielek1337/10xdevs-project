@@ -200,8 +200,22 @@ export class DashboardPage extends BasePage {
     // Submit form
     await this.submitButton.click();
 
-    // Wait for submission to complete (anti-spam alert or success)
-    await this.page.waitForTimeout(1000);
+    // Wait for the entry to appear in the list or for an error
+    // This ensures the entry was successfully created before continuing
+    try {
+      await this.page.waitForFunction(
+        (taskText) => {
+          const entryCards = document.querySelectorAll('[data-testid="entry-card"], article');
+          return Array.from(entryCards).some((card) => card.textContent?.includes(taskText));
+        },
+        options.task,
+        { timeout: 5000 }
+      );
+    } catch {
+      // If entry doesn't appear, wait a bit longer and continue
+      // (might be shown on dashboard with empty state removed)
+      await this.page.waitForTimeout(1000);
+    }
   }
 
   /**

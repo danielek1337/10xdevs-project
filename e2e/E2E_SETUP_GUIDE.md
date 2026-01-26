@@ -37,8 +37,32 @@ Ensure `.env` contains Supabase configuration:
 
 ```bash
 PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-PUBLIC_SUPABASE_ANON_KEY=sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
+PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
+
+**To get your local Supabase keys:**
+
+```bash
+# Run this command to see all your local Supabase credentials
+supabase status
+```
+
+**Expected output:**
+```
+         API URL: http://127.0.0.1:54321
+          DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      Studio URL: http://127.0.0.1:54323
+    Inbucket URL: http://127.0.0.1:54324
+      JWT secret: super-secret-jwt-token-with-at-least-32-characters-long
+        anon key: eyJhbGci...  <-- Copy this for PUBLIC_SUPABASE_ANON_KEY
+service_role key: eyJhbGci...  <-- Copy this for SUPABASE_SERVICE_ROLE_KEY
+```
+
+**⚠️ Important:** 
+- The `SUPABASE_SERVICE_ROLE_KEY` is required for E2E tests to automatically create test users
+- **Never commit the `.env` file** with real keys to version control
+- The service role key has admin privileges and should be kept secret
 
 ## Test User Creation 🧑‍💻
 

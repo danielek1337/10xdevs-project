@@ -7,22 +7,62 @@
  * - Environment is ready for testing
  */
 
+/* eslint-disable no-console */
 import { createClient } from "@supabase/supabase-js";
+import { readFileSync } from "fs";
+import { resolve } from "path";
 
 const TEST_USER = {
   email: "test-e2e@vibecheck.com",
   password: "TestPassword123!",
 };
 
+// Load environment variables from .env file
+function loadEnv() {
+  try {
+    const envPath = resolve(process.cwd(), ".env");
+    const envContent = readFileSync(envPath, "utf-8");
+
+    envContent.split("\n").forEach((line) => {
+      const trimmedLine = line.trim();
+      if (!trimmedLine || trimmedLine.startsWith("#")) return;
+
+      const [key, ...valueParts] = trimmedLine.split("=");
+      if (key && valueParts.length > 0) {
+        const value = valueParts.join("=").trim();
+        // Only set if not already set (allows env vars to override .env file)
+        if (!process.env[key]) {
+          process.env[key] = value;
+        }
+      }
+    });
+  } catch (error) {
+    console.warn("⚠️  Could not load .env file:", error);
+  }
+}
+
 async function globalSetup() {
   console.log("🔧 Setting up E2E test environment...");
+
+  // Load environment variables from .env file
+  loadEnv();
 
   // Supabase local instance - Use SERVICE ROLE KEY for admin access
   const supabaseUrl = process.env.PUBLIC_SUPABASE_URL || "http://127.0.0.1:54321";
 
   // Use SERVICE ROLE KEY (not anon key) to have admin privileges
   // This allows us to create users that are automatically confirmed
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz";
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseServiceKey) {
+    console.error("\n❌ Missing SUPABASE_SERVICE_ROLE_KEY environment variable!");
+    console.error("\n📝 To fix this:");
+    console.error("1. Run: supabase status");
+    console.error("2. Copy the 'Secret' key from the output");
+    console.error("3. Add to your .env file: SUPABASE_SERVICE_ROLE_KEY=<your-secret-key>");
+    console.error("4. Or run: export SUPABASE_SERVICE_ROLE_KEY=<your-secret-key>\n");
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY environment variable is required for E2E tests");
+  }
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
@@ -35,7 +75,6 @@ async function globalSetup() {
     // First, try to get user by email using admin API
     const {
       data: { users },
-      error: listError,
     } = await supabase.auth.admin.listUsers();
 
     const existingUser = users?.find((u) => u.email === TEST_USER.email);
@@ -62,7 +101,7 @@ async function globalSetup() {
     }
 
     // Now try to sign in
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email: TEST_USER.email,
       password: TEST_USER.password,
     });
@@ -72,7 +111,7 @@ async function globalSetup() {
 
       // User doesn't exist, create it using admin API
       // Using service role key allows automatic email confirmation
-      const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
+      const { error: signUpError } = await supabase.auth.admin.createUser({
         email: TEST_USER.email,
         password: TEST_USER.password,
         email_confirm: true, // Auto-confirm email
