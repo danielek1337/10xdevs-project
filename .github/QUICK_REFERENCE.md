@@ -53,13 +53,15 @@ PR Created/Updated
 
 ## 🔐 Wymagane GitHub Secrets
 
-| Secret Name | Gdzie znaleźć |
-|-------------|---------------|
-| `PUBLIC_SUPABASE_URL` | Supabase Dashboard → Settings → API → Project URL |
-| `PUBLIC_SUPABASE_ANON_KEY` | Supabase Dashboard → Settings → API → anon key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase Dashboard → Settings → API → service_role key |
+| Secret Name | Mapuje do | Gdzie znaleźć |
+|-------------|-----------|---------------|
+| `PUBLIC_SUPABASE_URL` | `SUPABASE_URL` | Supabase Dashboard → Settings → API → Project URL |
+| `PUBLIC_SUPABASE_ANON_KEY` | `SUPABASE_KEY` | Supabase Dashboard → Settings → API → anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | (bez zmian) | Supabase Dashboard → Settings → API → service_role key |
 
 **Setup:** `Settings` → `Secrets and variables` → `Actions` → `New repository secret`
+
+**Uwaga:** Sekrety używają `PUBLIC_*` nazw, ale są automatycznie mapowane do lokalnych nazw projektu.
 
 ---
 

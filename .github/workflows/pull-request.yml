@@ -95,8 +95,9 @@ jobs:
       CI: true
       NODE_ENV: integration
       # Zmienne środowiskowe dla Supabase (z GitHub Secrets)
-      PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
-      PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+      # Mapowanie: GitHub Secrets -> Lokalne nazwy projektu
+      SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
     steps:
@@ -123,9 +124,8 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
-          PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
 
       # 6. Uruchomienie testów E2E
       - name: Run E2E tests
