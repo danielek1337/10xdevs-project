@@ -1,0 +1,334 @@
+name: Pull Request CI
+
+# Workflow uruchamia się automatycznie przy każdym pull requeście do brancha master
+on:
+  pull_request:
+    branches:
+      - master
+    types: [opened, synchronize, reopened]
+
+# Uprawnienia dla GITHUB_TOKEN
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  # Job 1: Lintowanie kodu
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # 1. Checkout kodu z repozytorium
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Setup Node.js z cache dla npm (wersja z .nvmrc)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      # 3. Instalacja zależności projektu
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Sprawdzenie kompilacji TypeScript
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      # 5. Sprawdzenie kodu za pomocą ESLint
+      - name: Lint code
+        run: npm run lint
+
+  # Job 2: Testy jednostkowe z coverage
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint
+
+    env:
+      CI: true
+
+    steps:
+      # 1. Checkout kodu
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      # 3. Instalacja zależności
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Uruchomienie testów jednostkowych z coverage
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+      # 5. Upload coverage artifacts
+      - name: Upload unit test coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-coverage
+          path: coverage/
+          retention-days: 7
+          if-no-files-found: warn
+
+  # Job 3: Testy E2E z coverage
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: lint
+
+    env:
+      CI: true
+      NODE_ENV: integration
+      # Zmienne środowiskowe dla Supabase (z GitHub Secrets)
+      PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+      PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      # 1. Checkout kodu
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      # 3. Instalacja zależności
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Instalacja przeglądarek Playwright (tylko Chromium zgodnie z playwright.config.ts)
+      - name: Install Playwright browsers
+        run: npm run playwright:install
+
+      # 5. Budowanie aplikacji dla testów E2E
+      - name: Build application
+        run: npm run build
+
+      # 6. Uruchomienie testów E2E
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      # 7. Upload Playwright report
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+          if-no-files-found: warn
+
+      # 8. Upload E2E test results
+      - name: Upload E2E test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: playwright-results/
+          retention-days: 7
+          if-no-files-found: warn
+
+  # Job 4: Status comment - komentarz do PR z wynikami
+  status-comment:
+    name: PR Status Comment
+    runs-on: ubuntu-latest
+    needs: [lint, unit-tests, e2e-tests]
+    if: always() && needs.lint.result == 'success' && needs.unit-tests.result == 'success' && needs.e2e-tests.result == 'success'
+
+    steps:
+      # 1. Checkout kodu (potrzebne dla kontekstu)
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Download artifacts
+      - name: Download unit test coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: unit-test-coverage
+          path: ./coverage-unit/
+        continue-on-error: true
+
+      # 3. Download Playwright results
+      - name: Download Playwright results
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-results
+          path: ./playwright-results/
+        continue-on-error: true
+
+      # 4. Generowanie komentarza do PR
+      - name: Comment PR with status
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Przygotowanie statusów
+            const lintStatus = '${{ needs.lint.result }}' === 'success' ? '✅ Passed' : '❌ Failed';
+            const unitTestsStatus = '${{ needs.unit-tests.result }}' === 'success' ? '✅ Passed' : '❌ Failed';
+            const e2eTestsStatus = '${{ needs.e2e-tests.result }}' === 'success' ? '✅ Passed' : '❌ Failed';
+            
+            // Sprawdzenie czy wszystkie testy przeszły
+            const allPassed = '${{ needs.lint.result }}' === 'success' && 
+                              '${{ needs.unit-tests.result }}' === 'success' && 
+                              '${{ needs.e2e-tests.result }}' === 'success';
+            
+            const overallStatus = allPassed ? '✅ All checks passed!' : '❌ Some checks failed';
+            const emoji = allPassed ? '🎉' : '⚠️';
+            
+            // Próba odczytania coverage
+            let coverageInfo = '';
+            try {
+              const coveragePath = path.join(process.cwd(), 'coverage-unit', 'coverage-summary.json');
+              if (fs.existsSync(coveragePath)) {
+                const coverage = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
+                const total = coverage.total;
+                coverageInfo = `
+            ### 📊 Code Coverage
+            
+            | Metric | Coverage |
+            |--------|----------|
+            | Lines | ${total.lines.pct}% |
+            | Statements | ${total.statements.pct}% |
+            | Functions | ${total.functions.pct}% |
+            | Branches | ${total.branches.pct}% |
+            `;
+              }
+            } catch (error) {
+              console.log('Could not read coverage data:', error.message);
+            }
+            
+            // Próba odczytania wyników E2E
+            let e2eInfo = '';
+            try {
+              const e2eResultsPath = path.join(process.cwd(), 'playwright-results', 'test-results.json');
+              if (fs.existsSync(e2eResultsPath)) {
+                const e2eResults = JSON.parse(fs.readFileSync(e2eResultsPath, 'utf8'));
+                const stats = e2eResults.stats || {};
+                e2eInfo = `
+            ### 🎭 E2E Test Results
+            
+            - **Total Tests:** ${stats.expected || 0}
+            - **Passed:** ${stats.expected || 0}
+            - **Failed:** ${stats.unexpected || 0}
+            - **Flaky:** ${stats.flaky || 0}
+            - **Skipped:** ${stats.skipped || 0}
+            `;
+              }
+            } catch (error) {
+              console.log('Could not read E2E results:', error.message);
+            }
+            
+            // Tworzenie komentarza
+            const comment = `## ${emoji} Pull Request CI Results
+            
+            **Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            **Commit:** \`${{ github.event.pull_request.head.sha }}\`
+            **Branch:** \`${{ github.head_ref }}\`
+            
+            ### 📋 Check Results
+            
+            | Check | Status |
+            |-------|--------|
+            | 🔍 Linting & TypeScript | ${lintStatus} |
+            | 🧪 Unit Tests | ${unitTestsStatus} |
+            | 🎭 E2E Tests | ${e2eTestsStatus} |
+            
+            ${coverageInfo}
+            ${e2eInfo}
+            
+            ---
+            
+            **Overall Status:** ${overallStatus}
+            
+            ${allPassed ? '✨ Great work! All checks passed successfully.' : '⚠️ Please review the failed checks and fix any issues.'}
+            `;
+            
+            // Pobranie istniejących komentarzy
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            // Sprawdzenie czy bot już skomentował
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Pull Request CI Results')
+            );
+            
+            if (botComment) {
+              // Aktualizacja istniejącego komentarza
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              // Utworzenie nowego komentarza
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+
+  # Job 5: Pipeline Summary (zawsze uruchamia się)
+  summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [lint, unit-tests, e2e-tests]
+    if: always()
+
+    steps:
+      - name: Generate pipeline summary
+        run: |
+          echo "## 🔄 Pull Request CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**PR:** #${{ github.event.pull_request.number }} - ${{ github.event.pull_request.title }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.event.pull_request.head.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Author:** @${{ github.event.pull_request.user.login }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔍 Lint | ${{ needs.lint.result == 'success' && '✅ Passed' || needs.lint.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🧪 Unit Tests | ${{ needs.unit-tests.result == 'success' && '✅ Passed' || needs.unit-tests.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🎭 E2E Tests | ${{ needs.e2e-tests.result == 'success' && '✅ Passed' || needs.e2e-tests.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Określenie ogólnego statusu
+          if [ "${{ needs.lint.result }}" == "success" ] && [ "${{ needs.unit-tests.result }}" == "success" ] && [ "${{ needs.e2e-tests.result }}" == "success" ]; then
+            echo "**Overall Result:** ✅ All checks passed!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🎉 Great work! This PR is ready for review." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Overall Result:** ❌ Some checks failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Please review the failed checks and fix any issues before merging." >> $GITHUB_STEP_SUMMARY
+          fi
