@@ -90,9 +90,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: lint
+    environment: integration
 
     env:
       CI: true
+      NODE_ENV: integration
+      # Zmienne środowiskowe dla Supabase (z GitHub Secrets)
+      # Mapowanie: GitHub Secrets -> Lokalne nazwy projektu
+      SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
     steps:
       # 1. Checkout kodu
@@ -114,23 +121,18 @@ jobs:
       - name: Install Playwright browsers
         run: npm run playwright:install
 
-      # 5. Utworzenie pliku .env z sekretów (dla Astro dev server)
-      - name: Create .env file
-        run: |
-          echo "SUPABASE_URL=${{ secrets.PUBLIC_SUPABASE_URL }}" > .env
-          echo "SUPABASE_KEY=${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}" >> .env
-          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env
-          echo "NODE_ENV=integration" >> .env
-
-      # 6. Budowanie aplikacji dla testów E2E
+      # 5. Budowanie aplikacji dla testów E2E
       - name: Build application
         run: npm run build
+        env:
+          SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
 
-      # 7. Uruchomienie testów E2E
+      # 6. Uruchomienie testów E2E
       - name: Run E2E tests
         run: npm run test:e2e
 
-      # 8. Upload Playwright report
+      # 7. Upload Playwright report
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
@@ -140,7 +142,7 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
 
-      # 9. Upload E2E test results
+      # 8. Upload E2E test results
       - name: Upload E2E test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -149,11 +151,6 @@ jobs:
           path: playwright-results/
           retention-days: 7
           if-no-files-found: warn
-
-      # 10. Cleanup .env file (security)
-      - name: Cleanup .env file
-        if: always()
-        run: rm -f .env
 
   # Job 4: Status comment - komentarz do PR z wynikami
   status-comment:
