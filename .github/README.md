@@ -94,17 +94,16 @@ Buduje aplikację w wersji produkcyjnej, weryfikując czy kod kompiluje się pop
 ├─────────────────────────────────────────────────────────────┤
 │  7. Setup Supabase CLI                                       │
 │  8. Start local Supabase instance                           │
-│  9. Set environment variables                               │
-│  10. Cache Playwright browsers                              │
-│  11. Install Playwright Chromium (if not cached)           │
-│  12. Run Playwright E2E tests                               │
-│  13. Upload Playwright artifacts (on failure)               │
+│  9. Cache Playwright browsers                               │
+│  10. Install Playwright Chromium (if not cached)           │
+│  11. Run Playwright E2E tests (with env vars)              │
+│  12. Upload Playwright artifacts (on failure)               │
 ├─────────────────────────────────────────────────────────────┤
-│  14. Build production bundle                                │
-│  15. Upload build artifacts (on success)                    │
-│  16. Stop Supabase (cleanup)                                │
+│  13. Build production bundle                                │
+│  14. Upload build artifacts (on success)                    │
+│  15. Stop Supabase (cleanup)                                │
 ├─────────────────────────────────────────────────────────────┤
-│  17. Generate enhanced pipeline summary                     │
+│  16. Generate enhanced pipeline summary                     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -189,6 +188,27 @@ npm run test:e2e:headed
 ```bash
 # Uruchom build lokalnie:
 npm run build
+```
+
+### ❌ E2E tests fail with "supabaseUrl is required"
+
+Ten błąd oznacza, że zmienne środowiskowe nie są przekazywane do Astro dev server uruchamianego przez Playwright.
+
+**Przyczyna:**
+- `$GITHUB_ENV` zapisuje zmienne dla *kolejnych kroków*, ale nie dla subprocessów
+- Playwright uruchamia Astro dev server jako subprocess
+- Subprocess nie dziedziczy zmiennych z `$GITHUB_ENV`
+
+**Rozwiązanie:**
+Zmienne muszą być eksportowane (`export`) w tym samym kroku co uruchomienie testów:
+
+```yaml
+- name: Run E2E tests
+  run: |
+    export PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+    export SUPABASE_KEY=$(supabase status -o env | grep ANON_KEY | cut -d '=' -f2)
+    export SUPABASE_SERVICE_ROLE_KEY=$(supabase status -o env | grep SERVICE_ROLE_KEY | cut -d '=' -f2)
+    npm run test:e2e
 ```
 
 ## Cache i Optymalizacja
