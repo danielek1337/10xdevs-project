@@ -7,6 +7,7 @@ Pipeline CI/CD automatycznie weryfikuje jakość kodu i poprawność działania 
 ## Uruchamianie
 
 ### Automatyczne uruchomienie
+
 Pipeline uruchamia się automatycznie przy każdym pushu do brancha `master`:
 
 ```bash
@@ -14,6 +15,7 @@ git push origin master
 ```
 
 ### Manualne uruchomienie
+
 1. Przejdź do zakładki **Actions** w repozytorium GitHub
 2. Wybierz workflow **CI/CD Pipeline**
 3. Kliknij **Run workflow**
@@ -22,45 +24,58 @@ git push origin master
 ## Etapy Pipeline
 
 ### 1. **TypeScript Check** ✨
+
 ```bash
 npx tsc --noEmit
 ```
+
 Weryfikuje poprawność typów TypeScript bez generowania plików wyjściowych.
 
 ### 2. **ESLint** 🔍
+
 ```bash
 npm run lint
 ```
+
 Sprawdza jakość kodu i wykrywa potencjalne błędy zgodnie z regułami projektu.
 
 ### 3. **Unit Tests** 🧪
+
 ```bash
 npm run test:unit
 ```
+
 Uruchamia testy jednostkowe za pomocą Vitest:
+
 - Testy hooki (`useAuth`, `useResetTokens`)
 - Testy logiki biznesowej
 - Testy funkcji pomocniczych
 
 ### 4. **E2E Tests** 🎭
+
 ```bash
 npm run test:e2e
 ```
+
 Uruchamia testy end-to-end za pomocą Playwright:
+
 - Testy flow autentykacji
 - Testy CRUD dla wpisów
 - Testy dashboard
 - Weryfikacja izolacji danych użytkowników (RLS)
 
 **Wymagania dla E2E:**
+
 - Lokalna instancja Supabase (automatycznie uruchamiana w pipeline)
 - Przeglądarka Chromium (automatycznie instalowana)
 - Zmienne środowiskowe (automatycznie ustawiane)
 
 ### 5. **Production Build** 🏗️
+
 ```bash
 npm run build
 ```
+
 Buduje aplikację w wersji produkcyjnej, weryfikując czy kod kompiluje się poprawnie.
 
 ## Architektura Pipeline
@@ -96,11 +111,13 @@ Buduje aplikację w wersji produkcyjnej, weryfikując czy kod kompiluje się pop
 ## Zmienne środowiskowe
 
 ### Wymagane dla testów E2E (ustawiane automatycznie)
+
 - `PUBLIC_SUPABASE_URL` - URL lokalnej instancji Supabase
 - `SUPABASE_KEY` - Anon key z lokalnej instancji
 - `SUPABASE_SERVICE_ROLE_KEY` - Service role key dla testów E2E
 
 ### Wymagane dla production build (opcjonalne w CI)
+
 Dla prawdziwego deploymentu, dodaj GitHub Secrets:
 
 1. Przejdź do **Settings** → **Secrets and variables** → **Actions**
@@ -111,6 +128,7 @@ Dla prawdziwego deploymentu, dodaj GitHub Secrets:
 ## Artefakty
 
 ### Playwright Report
+
 Przy failurze testów E2E, raport Playwright jest automatycznie uploadowany jako artefakt:
 
 1. Przejdź do zakładki **Actions**
@@ -120,6 +138,7 @@ Przy failurze testów E2E, raport Playwright jest automatycznie uploadowany jako
 5. Otwórz `index.html` w przeglądarce
 
 Raport zawiera:
+
 - Screenshots z momentu failure
 - Video recordings testów
 - Trace viewer dla szczegółowego debugowania
@@ -128,18 +147,21 @@ Raport zawiera:
 ## Troubleshooting
 
 ### ❌ TypeScript compilation errors
+
 ```bash
 # Lokalnie sprawdź błędy TypeScript:
 npx tsc --noEmit
 ```
 
 ### ❌ ESLint errors
+
 ```bash
 # Lokalnie napraw błędy ESLint:
 npm run lint:fix
 ```
 
 ### ❌ Unit tests failing
+
 ```bash
 # Uruchom testy lokalnie w watch mode:
 npm run test:watch
@@ -149,6 +171,7 @@ npm run test:ui
 ```
 
 ### ❌ E2E tests failing
+
 ```bash
 # Uruchom testy E2E lokalnie:
 supabase start
@@ -162,6 +185,7 @@ npm run test:e2e:headed
 ```
 
 ### ❌ Build failing
+
 ```bash
 # Uruchom build lokalnie:
 npm run build
@@ -170,6 +194,7 @@ npm run build
 ## Cache i Optymalizacja
 
 Pipeline wykorzystuje cache dla:
+
 - **npm dependencies** - Przyspiesza instalację zależności (hash `package-lock.json`)
 - **Playwright browsers** - Cachuje przeglądarki Chromium między uruchomieniami
 - **Node.js setup** - Automatycznie czyta wersję z `.nvmrc` (22.14.0)
@@ -177,6 +202,7 @@ Pipeline wykorzystuje cache dla:
 ## Czas wykonania
 
 Średni czas wykonania pipeline: **~4-7 minut** (z cache)
+
 - Setup (30s-1 min z cache, 2 min bez cache)
 - Linting & Type checking (~30s)
 - Unit tests (~30s)
@@ -204,7 +230,7 @@ deploy:
         vercel-token: ${{ secrets.VERCEL_TOKEN }}
         vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-        vercel-args: '--prod'
+        vercel-args: "--prod"
 ```
 
 ### Dodanie code coverage
@@ -225,6 +251,7 @@ Aby generować raporty code coverage:
 ## Konwencje commitów
 
 Pipeline wspiera conventional commits. Używaj:
+
 - `feat:` - nowa funkcjonalność
 - `fix:` - naprawa błędu
 - `docs:` - zmiany w dokumentacji
@@ -239,4 +266,3 @@ Dodaj badge do README.md:
 ```markdown
 ![CI/CD Pipeline](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/master.yml/badge.svg)
 ```
-

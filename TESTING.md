@@ -25,6 +25,7 @@ VibeCheck uses a comprehensive testing strategy:
 ## Testing Stack
 
 ### Unit & Component Testing
+
 - **Vitest**: Fast unit testing framework with native ESM support
 - **React Testing Library**: Test React components from user perspective
 - **jsdom**: DOM implementation for Node.js
@@ -32,9 +33,11 @@ VibeCheck uses a comprehensive testing strategy:
 - **@testing-library/jest-dom**: Custom matchers for DOM assertions
 
 ### API Mocking
+
 - **MSW (Mock Service Worker)**: Network-level API mocking
 
 ### E2E Testing
+
 - **Playwright**: Modern E2E testing framework
 - **Chromium**: Only browser configured (as per requirements)
 
@@ -96,21 +99,22 @@ export function calculateScore(values: number[]): number {
 }
 
 // src/lib/calculateScore.test.ts
-import { describe, it, expect } from 'vitest';
-import { calculateScore } from './calculateScore';
+import { describe, it, expect } from "vitest";
+import { calculateScore } from "./calculateScore";
 
-describe('calculateScore', () => {
-  it('should return 0 for empty array', () => {
+describe("calculateScore", () => {
+  it("should return 0 for empty array", () => {
     expect(calculateScore([])).toBe(0);
   });
 
-  it('should calculate average correctly', () => {
+  it("should calculate average correctly", () => {
     expect(calculateScore([2, 4, 6])).toBe(4);
   });
 });
 ```
 
 ### Key Points
+
 - Use `describe` blocks to group related tests
 - Use descriptive test names that explain what is being tested
 - Follow Arrange-Act-Assert pattern
@@ -139,15 +143,16 @@ describe('Counter', () => {
   it('should increment when button clicked', async () => {
     const user = userEvent.setup();
     renderWithProviders(<Counter />);
-    
+
     await user.click(screen.getByRole('button', { name: /increment/i }));
-    
+
     expect(screen.getByText('Count: 1')).toBeInTheDocument();
   });
 });
 ```
 
 ### Key Points
+
 - Use `renderWithProviders` from test-utils
 - Query elements by role, label, or text (accessible queries)
 - Use `userEvent` for simulating user interactions
@@ -163,8 +168,8 @@ Use the Page Object Model pattern to encapsulate page interactions:
 
 ```typescript
 // e2e/pages/LoginPage.ts
-import { Page, Locator } from '@playwright/test';
-import { BasePage } from './BasePage';
+import { Page, Locator } from "@playwright/test";
+import { BasePage } from "./BasePage";
 
 export class LoginPage extends BasePage {
   readonly emailInput: Locator;
@@ -173,9 +178,9 @@ export class LoginPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.emailInput = page.getByLabel('Email');
-    this.passwordInput = page.getByLabel('Password');
-    this.submitButton = page.getByRole('button', { name: /log in/i });
+    this.emailInput = page.getByLabel("Email");
+    this.passwordInput = page.getByLabel("Password");
+    this.submitButton = page.getByRole("button", { name: /log in/i });
   }
 
   async login(email: string, password: string) {
@@ -190,22 +195,23 @@ export class LoginPage extends BasePage {
 
 ```typescript
 // e2e/auth.e2e.test.ts
-import { test, expect } from '@playwright/test';
-import { LoginPage } from './pages/LoginPage';
+import { test, expect } from "@playwright/test";
+import { LoginPage } from "./pages/LoginPage";
 
-test.describe('Authentication', () => {
-  test('should login successfully', async ({ page }) => {
+test.describe("Authentication", () => {
+  test("should login successfully", async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.navigate();
-    
-    await loginPage.login('user@example.com', 'password123');
-    
+
+    await loginPage.login("user@example.com", "password123");
+
     await expect(page).toHaveURL(/dashboard/);
   });
 });
 ```
 
 ### Key Points
+
 - Use Page Object Model for maintainable tests
 - Use browser contexts for test isolation
 - Use descriptive locators (role, label, text)
@@ -240,6 +246,7 @@ project-root/
 ## Best Practices
 
 ### General
+
 - Write tests alongside the code (not after)
 - Test behavior, not implementation details
 - Keep tests simple and focused
@@ -247,6 +254,7 @@ project-root/
 - Follow Arrange-Act-Assert pattern
 
 ### Unit Tests
+
 - Test pure functions and business logic
 - Mock external dependencies
 - Test edge cases and error conditions
@@ -254,6 +262,7 @@ project-root/
 - Use `vi.fn()` for function mocks
 
 ### Component Tests
+
 - Test from user perspective
 - Use accessible queries (role, label, text)
 - Avoid testing implementation details
@@ -261,6 +270,7 @@ project-root/
 - Use `userEvent` over `fireEvent`
 
 ### E2E Tests
+
 - Use Page Object Model pattern
 - Test critical user workflows
 - Keep tests independent
@@ -269,6 +279,7 @@ project-root/
 - Only test in Chromium (as per requirements)
 
 ### API Mocking with MSW
+
 - Define handlers in `msw-handlers.ts`
 - Use `server.use()` to override handlers per test
 - Reset handlers after each test
@@ -277,12 +288,14 @@ project-root/
 ## Configuration Files
 
 ### vitest.config.ts
+
 - Configures jsdom environment
 - Sets up test file patterns
 - Configures coverage thresholds
 - Defines path aliases
 
 ### playwright.config.ts
+
 - Configures Chromium browser only
 - Sets up test directory (`e2e/`)
 - Configures reporters (HTML, JSON, list)
@@ -291,6 +304,7 @@ project-root/
 ## Debugging Tests
 
 ### Unit Tests
+
 ```bash
 # Run specific test file
 npm test -- src/lib/example.test.ts
@@ -303,6 +317,7 @@ npm run test:ui
 ```
 
 ### E2E Tests
+
 ```bash
 # Run specific test file
 npm run test:e2e -- e2e/landing.e2e.test.ts
@@ -319,6 +334,7 @@ npx playwright show-trace playwright-results/trace.zip
 After running `npm run test:coverage`, open `coverage/index.html` in your browser to view the coverage report.
 
 Coverage is configured to exclude:
+
 - Test files
 - Configuration files
 - Type definitions
@@ -343,15 +359,19 @@ All tests must pass before deployment to Vercel.
 ### Common Issues
 
 **Issue**: Tests fail with "Cannot find module"
+
 - **Solution**: Check path aliases in `vitest.config.ts`
 
 **Issue**: Component tests fail with "not wrapped in act(...)"
+
 - **Solution**: Use `await` with `userEvent` interactions
 
 **Issue**: E2E tests timeout
+
 - **Solution**: Increase timeout in `playwright.config.ts` or use `test.setTimeout()`
 
 **Issue**: MSW handlers not working
+
 - **Solution**: Ensure `msw-setup.ts` is imported in test setup
 
 ## Additional Resources
@@ -361,4 +381,3 @@ All tests must pass before deployment to Vercel.
 - [Playwright Documentation](https://playwright.dev/)
 - [MSW Documentation](https://mswjs.io/)
 - [Testing Best Practices](https://kentcdodds.com/blog/common-mistakes-with-react-testing-library)
-

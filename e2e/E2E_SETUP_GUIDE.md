@@ -15,6 +15,7 @@ supabase start
 ```
 
 **Expected output:**
+
 ```
 ✔ Supabase local development setup is running.
 ```
@@ -24,9 +25,10 @@ supabase start
 The application must run on port **4321** (not 3000).
 
 **Check `astro.config.mjs`:**
+
 ```javascript
 export default defineConfig({
-  server: { port: 4321 },  // ✅ Must be 4321
+  server: { port: 4321 }, // ✅ Must be 4321
   // ...
 });
 ```
@@ -49,6 +51,7 @@ supabase status
 ```
 
 **Expected output:**
+
 ```
          API URL: http://127.0.0.1:54321
           DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
@@ -59,7 +62,8 @@ supabase status
 service_role key: eyJhbGci...  <-- Copy this for SUPABASE_SERVICE_ROLE_KEY
 ```
 
-**⚠️ Important:** 
+**⚠️ Important:**
+
 - The `SUPABASE_SERVICE_ROLE_KEY` is required for E2E tests to automatically create test users
 - **Never commit the `.env` file** with real keys to version control
 - The service role key has admin privileges and should be kept secret
@@ -70,8 +74,8 @@ The E2E tests use a dedicated test user:
 
 ```typescript
 const TEST_USER = {
-  email: 'test-e2e@vibecheck.com',
-  password: 'TestPassword123!',
+  email: "test-e2e@vibecheck.com",
+  password: "TestPassword123!",
 };
 ```
 
@@ -80,6 +84,7 @@ const TEST_USER = {
 The `global-setup.ts` automatically creates the test user before tests run.
 
 **How it works:**
+
 1. Playwright runs `e2e/setup/global-setup.ts` before any tests
 2. Script attempts to sign in with test credentials
 3. If user doesn't exist, creates it
@@ -136,6 +141,7 @@ npm run test:e2e
 **Cause:** Dev server can't start (usually port conflict or missing dependencies)
 
 **Solution:**
+
 ```bash
 # Kill processes on port 4321
 lsof -ti:4321 | xargs kill -9
@@ -150,6 +156,7 @@ npm run test:e2e
 ### Issue: All tests timeout at login
 
 **Symptoms:**
+
 ```
 TimeoutError: page.waitForURL: Timeout 15000ms exceeded.
 ```
@@ -157,6 +164,7 @@ TimeoutError: page.waitForURL: Timeout 15000ms exceeded.
 **Causes & Solutions:**
 
 #### 1. Supabase Not Running
+
 ```bash
 supabase status
 # If not running:
@@ -164,18 +172,21 @@ supabase start
 ```
 
 #### 2. Test User Doesn't Exist
+
 ```bash
 # Check global-setup.ts logs when running tests
 # Look for: "✅ Test user created successfully"
 ```
 
 #### 3. Wrong Supabase URL/Key
+
 ```bash
 # Verify .env matches supabase status output
 cat .env | grep SUPABASE
 ```
 
 #### 4. Database Not Migrated
+
 ```bash
 # Apply migrations
 supabase db push
@@ -186,6 +197,7 @@ supabase db push
 **Cause:** OneDrive sync conflict
 
 **Solution:**
+
 ```bash
 # Ensure .env is not being synced by OneDrive
 # Or temporarily pause OneDrive sync
@@ -246,6 +258,7 @@ For GitHub Actions or similar:
 ```
 
 The `CI=true` env variable:
+
 - Disables `reuseExistingServer` (always starts fresh)
 - Increases retry count to 2
 - Runs tests sequentially (1 worker)
@@ -265,6 +278,7 @@ Before running tests, verify:
 ### Test Isolation
 
 Each test should be independent:
+
 - Uses unique timestamps for entry names
 - Cleans up after itself (optional)
 - Doesn't depend on other test results
@@ -272,11 +286,13 @@ Each test should be independent:
 ### Test User Persistence
 
 The test user **persists** between test runs for speed. This means:
+
 - ✅ Faster subsequent test runs (no user creation)
 - ✅ Can accumulate test data over time
 - ⚠️ May need occasional cleanup
 
 To reset test user data:
+
 ```bash
 # Via Supabase Studio
 # 1. Go to http://127.0.0.1:54323
@@ -289,25 +305,30 @@ To reset test user data:
 ### Speed Up Test Execution
 
 1. **Use UI Mode for Development**
+
    ```bash
    npm run test:e2e:ui
    ```
+
    - Run tests selectively
    - Debug interactively
    - Time travel through test steps
 
 2. **Reuse Existing Server**
+
    ```bash
    # Terminal 1
    npm run dev
-   
+
    # Terminal 2
    npm run test:e2e
    ```
+
    - Skips 120s server startup
    - Tests start immediately
 
 3. **Run Specific Tests**
+
    ```bash
    npx playwright test -g "should create a new entry"
    ```
@@ -357,4 +378,3 @@ If issues persist:
 **Last Updated:** 2026-01-26  
 **Playwright Version:** 1.58.0  
 **Node Version:** 20+
-

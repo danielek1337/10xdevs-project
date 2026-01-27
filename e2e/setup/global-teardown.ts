@@ -27,9 +27,7 @@ async function globalTeardown() {
     await cleanupUserData(TEST_USER.email);
 
     console.log("✅ E2E test cleanup completed successfully");
-    console.log(
-      "📝 Note: Test user preserved for faster subsequent test runs\n"
-    );
+    console.log("📝 Note: Test user preserved for faster subsequent test runs\n");
   } catch (error) {
     console.error("❌ Failed to cleanup E2E test data:", error);
     // Don't throw - we don't want to fail the entire test run
@@ -39,4 +37,3 @@ async function globalTeardown() {
 }
 
 export default globalTeardown;
-

@@ -22,10 +22,12 @@ Reprezentuje pojedynczy wpis produktywności użytkownika (soft-delete).
   - **Wypełnianie**: trigger przed INSERT/UPDATE z `date_trunc('hour', created_at AT TIME ZONE 'UTC')`.
 
 Dodatkowe ograniczenia:
+
 - **UNIQUE**: `(user_id, created_hour_utc)`
   - **Ważne**: brak warunku na `deleted_at` — soft-delete **nie zwalnia** slotu.
 
 Sugerowane triggery / funkcje wspierające:
+
 - **`set_entries_updated_at()`**: przed UPDATE ustawia `updated_at = now()`
 - **`set_entries_created_hour_utc()`**: przed INSERT (i ewentualnie UPDATE, jeśli `created_at` uległ zmianie) ustawia `created_hour_utc`
 
@@ -42,6 +44,7 @@ Globalny katalog tagów (wspólny dla wszystkich użytkowników).
 - **created_at**: `timestamptz` **NOT NULL**, `DEFAULT now()`
 
 Dodatkowe ograniczenia:
+
 - **UNIQUE**: `(name)` (globalnie unikalne nazwy tagów)
 
 ---
@@ -55,9 +58,11 @@ Tabela łącząca M:N pomiędzy `entries` i `tags`.
 - **created_at**: `timestamptz` **NOT NULL**, `DEFAULT now()`
 
 Ograniczenia:
+
 - **PK (composite)**: `(entry_id, tag_id)` (zapewnia unikalność pary)
 
 Opcjonalne ograniczenie MVP (jeśli chcemy twardy limit „kilku” tagów na wpis):
+
 - **(opcjonalnie)** trigger walidujący maksymalną liczbę tagów na `entry_id` (np. 5/10).  
   _Wymaga decyzji produktowej — w notatkach jest to nierozstrzygnięte._
 
@@ -68,6 +73,7 @@ Opcjonalne ograniczenie MVP (jeśli chcemy twardy limit „kilku” tagów na wp
 Widok do liczenia „Daily Focus Score” na żądanie (bez materializacji), zawsze w UTC, z pominięciem soft-deleted.
 
 Sugerowane kolumny:
+
 - **user_id**: `uuid`
 - **day_utc**: `date` (z `created_at AT TIME ZONE 'UTC'`)
 - **entry_count**: `int`
@@ -78,10 +84,11 @@ Sugerowane kolumny:
 - **focus_score**: `numeric` (0–100)
 
 Sugerowana definicja (logika, nie migracja):
+
 - Filtr: `deleted_at IS NULL`
 - Grupowanie: `user_id`, `date(created_at AT TIME ZONE 'UTC')`
 - Komponenty score:
-  - **mood_score**: normalizacja `avg_mood` do 0–100 (np. \((avg\_mood - 1) / 4 * 100\))
+  - **mood_score**: normalizacja `avg_mood` do 0–100 (np. \((avg_mood - 1) / 4 \* 100\))
   - **consistency_score**: funkcja nasycająca liczby wpisów (np. `least(1, entry_count / 8.0) * 100`)
   - **distribution_score**: nasycenie na podstawie `span_minutes` (np. `least(1, span_minutes / 480.0) * 100`)
   - **focus_score**: wagi przykładowe: 55% mood, 25% consistency, 20% distribution
@@ -97,6 +104,7 @@ Sugerowana definicja (logika, nie migracja):
   - `entry_tags.tag_id` → `tags.id`
 
 Kardynalność:
+
 - `entries` do `entry_tags`: **1:N**
 - `tags` do `entry_tags`: **1:N**
 
@@ -132,6 +140,7 @@ Kardynalność:
 ### (Opcjonalnie) wyszukiwanie po tekście (bez full-text; MVP „contains/ILIKE”)
 
 Jeśli planowane jest `ILIKE '%...%'` po `task` i/lub `notes`, rozważyć:
+
 - `CREATE EXTENSION IF NOT EXISTS pg_trgm;`
 - `CREATE INDEX entries_task_trgm_idx ON public.entries USING gin (task gin_trgm_ops);`
 - `CREATE INDEX entries_notes_trgm_idx ON public.entries USING gin (notes gin_trgm_ops);`
@@ -193,6 +202,3 @@ Jeśli planowane jest `ILIKE '%...%'` po `task` i/lub `notes`, rozważyć:
 - **Nierozstrzygnięte (do decyzji)**:
   - limit liczby tagów na wpis (np. 5/10) — najlepiej egzekwować w DB triggerem, jeśli ma być twardy;
   - kto może tworzyć nowe globalne tagi (wszyscy vs admin) — wpływa na RLS dla `tags` (INSERT).
-
-
-

@@ -1,6 +1,7 @@
 # ⚡ SZYBKA NAPRAWA - Błąd "No suitable key"
 
 ## Problem
+
 ```
 Failed to fetch tags: No suitable key or wrong key type
 ```
@@ -26,12 +27,14 @@ SUPABASE_KEY=twoj_anon_key_tutaj
 ### 3. Gdzie wziąć te wartości?
 
 **Masz już projekt Supabase?**
+
 - Idź do https://supabase.com/dashboard
 - Wybierz projekt
 - Settings → API
 - Skopiuj "Project URL" i "anon public" key
 
 **Nie masz projektu?**
+
 - Idź do https://supabase.com
 - Utwórz darmowy projekt (3 minuty)
 - Po utworzeniu, znajdź klucze w Settings → API
@@ -77,5 +80,3 @@ npx supabase start
 ---
 
 Więcej szczegółów: `.ai/SUPABASE_SETUP.md`
-
-

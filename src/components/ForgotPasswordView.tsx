@@ -78,9 +78,8 @@ export default function ForgotPasswordView() {
           </CardHeader>
           <CardContent>
             <p className="text-center text-muted-foreground mb-6">
-              If an account exists for{" "}
-              <span className="font-medium text-foreground">{submittedEmail}</span>, you will receive a
-              password reset link shortly.
+              If an account exists for <span className="font-medium text-foreground">{submittedEmail}</span>, you will
+              receive a password reset link shortly.
             </p>
             <Button asChild className="w-full">
               <a href="/login">Back to Sign In</a>
@@ -98,9 +97,7 @@ export default function ForgotPasswordView() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Forgot Password?</CardTitle>
-          <CardDescription>
-            Enter your email address and we'll send you a link to reset your password
-          </CardDescription>
+          <CardDescription>Enter your email address and we'll send you a link to reset your password</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
@@ -152,5 +149,3 @@ export default function ForgotPasswordView() {
     </div>
   );
 }
-
-

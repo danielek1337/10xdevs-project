@@ -1,6 +1,7 @@
 # 🔧 API Quick Fix Guide
 
 ## Problem
+
 Dashboard frontend jest gotowy, ale brakuje API endpoints. Widzisz błędy 404 w konsoli:
 
 ```
@@ -28,13 +29,13 @@ export const GET: APIRoute = async ({ url, locals }) => {
 
     // Parse query params
     const params = url.searchParams;
-    const page = parseInt(params.get('page') || '1');
-    const limit = Math.min(parseInt(params.get('limit') || '20'), 100);
-    const sort = (params.get('sort') || 'created_at') as 'created_at' | 'mood' | 'updated_at';
-    const order = (params.get('order') || 'desc') as 'asc' | 'desc';
-    const mood = params.get('mood') ? parseInt(params.get('mood')!) : undefined;
-    const search = params.get('search') || undefined;
-    
+    const page = parseInt(params.get("page") || "1");
+    const limit = Math.min(parseInt(params.get("limit") || "20"), 100);
+    const sort = (params.get("sort") || "created_at") as "created_at" | "mood" | "updated_at";
+    const order = (params.get("order") || "desc") as "asc" | "desc";
+    const mood = params.get("mood") ? parseInt(params.get("mood")!) : undefined;
+    const search = params.get("search") || undefined;
+
     // Get entries from service
     const entriesService = new EntriesService(supabase);
     const result = await entriesService.getEntries(userId, {
@@ -44,9 +45,9 @@ export const GET: APIRoute = async ({ url, locals }) => {
       order,
       mood,
       search,
-      tag: params.get('tag') || undefined,
-      date_from: params.get('date_from') || undefined,
-      date_to: params.get('date_to') || undefined,
+      tag: params.get("tag") || undefined,
+      date_from: params.get("date_from") || undefined,
+      date_to: params.get("date_to") || undefined,
     });
 
     return new Response(JSON.stringify(result), {
@@ -55,15 +56,16 @@ export const GET: APIRoute = async ({ url, locals }) => {
     });
   } catch (error) {
     console.error("Error fetching entries:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error", code: "INTERNAL_ERROR" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error", code: "INTERNAL_ERROR" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
 ```
 
 ### Sprawdź czy EntriesService ma metodę getEntries()
+
 Jeśli nie ma, dodaj w `/src/lib/services/entries.service.ts`:
 
 ```typescript
@@ -95,7 +97,7 @@ async getEntries(
     .range(offset, offset + limit - 1);
 
   const { data, error, count } = await query;
-  
+
   if (error) throw error;
 
   return {
@@ -131,10 +133,10 @@ export const GET: APIRoute = async ({ params, locals }) => {
     const { id } = params;
 
     if (!id) {
-      return new Response(
-        JSON.stringify({ error: "Entry ID required", code: "INVALID_REQUEST" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Entry ID required", code: "INVALID_REQUEST" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const entriesService = new EntriesService(supabase);
@@ -147,15 +149,15 @@ export const GET: APIRoute = async ({ params, locals }) => {
   } catch (error) {
     console.error("Error fetching entry:", error);
     if (error.message?.includes("not found")) {
-      return new Response(
-        JSON.stringify({ error: "Entry not found", code: "NOT_FOUND" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Entry not found", code: "NOT_FOUND" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-    return new Response(
-      JSON.stringify({ error: "Internal server error", code: "INTERNAL_ERROR" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error", code: "INTERNAL_ERROR" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
 
@@ -167,14 +169,14 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
     const { id } = params;
 
     if (!id) {
-      return new Response(
-        JSON.stringify({ error: "Entry ID required", code: "INVALID_REQUEST" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Entry ID required", code: "INVALID_REQUEST" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const body: UpdateEntryDTO = await request.json();
-    
+
     const entriesService = new EntriesService(supabase);
     const entry = await entriesService.updateEntry(userId, id, body);
 
@@ -185,15 +187,15 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
   } catch (error) {
     console.error("Error updating entry:", error);
     if (error.message?.includes("not found")) {
-      return new Response(
-        JSON.stringify({ error: "Entry not found", code: "NOT_FOUND" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Entry not found", code: "NOT_FOUND" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-    return new Response(
-      JSON.stringify({ error: "Internal server error", code: "INTERNAL_ERROR" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error", code: "INTERNAL_ERROR" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
 
@@ -205,31 +207,31 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     const { id } = params;
 
     if (!id) {
-      return new Response(
-        JSON.stringify({ error: "Entry ID required", code: "INVALID_REQUEST" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Entry ID required", code: "INVALID_REQUEST" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const entriesService = new EntriesService(supabase);
     await entriesService.deleteEntry(userId, id);
 
-    return new Response(
-      JSON.stringify({ message: "Entry deleted successfully", id }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ message: "Entry deleted successfully", id }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (error) {
     console.error("Error deleting entry:", error);
     if (error.message?.includes("not found")) {
-      return new Response(
-        JSON.stringify({ error: "Entry not found", code: "NOT_FOUND" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Entry not found", code: "NOT_FOUND" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-    return new Response(
-      JSON.stringify({ error: "Internal server error", code: "INTERNAL_ERROR" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error", code: "INTERNAL_ERROR" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
 ```
@@ -252,8 +254,8 @@ export const GET: APIRoute = async ({ url, locals }) => {
     const { supabase, user } = locals;
     const userId = user?.id || "00000000-0000-0000-0000-000000000000";
 
-    const search = url.searchParams.get('search') || undefined;
-    const limit = parseInt(url.searchParams.get('limit') || '100');
+    const search = url.searchParams.get("search") || undefined;
+    const limit = parseInt(url.searchParams.get("limit") || "100");
 
     const tagsService = new TagsService(supabase);
     const result = await tagsService.getTags(userId, { search, limit });
@@ -264,10 +266,10 @@ export const GET: APIRoute = async ({ url, locals }) => {
     });
   } catch (error) {
     console.error("Error fetching tags:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error", code: "INTERNAL_ERROR" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error", code: "INTERNAL_ERROR" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
 ```
@@ -290,14 +292,14 @@ export const GET: APIRoute = async ({ url, locals }) => {
     const { supabase, user } = locals;
     const userId = user?.id || "00000000-0000-0000-0000-000000000000";
 
-    const dateFrom = url.searchParams.get('date_from');
-    const dateTo = url.searchParams.get('date_to');
+    const dateFrom = url.searchParams.get("date_from");
+    const dateTo = url.searchParams.get("date_to");
 
     if (!dateFrom || !dateTo) {
-      return new Response(
-        JSON.stringify({ error: "date_from and date_to are required", code: "INVALID_REQUEST" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "date_from and date_to are required", code: "INVALID_REQUEST" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const focusScoresService = new FocusScoresService(supabase);
@@ -309,10 +311,10 @@ export const GET: APIRoute = async ({ url, locals }) => {
     });
   } catch (error) {
     console.error("Error fetching focus scores:", error);
-    return new Response(
-      JSON.stringify({ error: "Internal server error", code: "INTERNAL_ERROR" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: "Internal server error", code: "INTERNAL_ERROR" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 };
 ```
@@ -327,24 +329,21 @@ import type { FocusScoreDTO, FocusScoresQueryParamsDTO } from "@/types";
 export class FocusScoresService {
   constructor(private supabase: SupabaseClient) {}
 
-  async getFocusScores(
-    userId: string,
-    params: FocusScoresQueryParamsDTO
-  ): Promise<FocusScoreDTO[]> {
+  async getFocusScores(userId: string, params: FocusScoresQueryParamsDTO): Promise<FocusScoreDTO[]> {
     const { date_from, date_to } = params;
 
     const { data, error } = await this.supabase
-      .from('v_daily_focus_scores_utc')
-      .select('*')
-      .eq('user_id', userId)
-      .gte('day_utc', date_from)
-      .lte('day_utc', date_to)
-      .order('day_utc', { ascending: true });
+      .from("v_daily_focus_scores_utc")
+      .select("*")
+      .eq("user_id", userId)
+      .gte("day_utc", date_from)
+      .lte("day_utc", date_to)
+      .order("day_utc", { ascending: true });
 
     if (error) throw error;
 
     // Transform to DTO format
-    return data.map(row => ({
+    return data.map((row) => ({
       day: row.day_utc,
       entry_count: row.entry_count,
       avg_mood: row.avg_mood,
@@ -378,10 +377,10 @@ export const POST: APIRoute = async ({ locals }) => {
 
   await supabase.auth.signOut();
 
-  return new Response(
-    JSON.stringify({ message: "Logged out successfully" }),
-    { status: 200, headers: { "Content-Type": "application/json" } }
-  );
+  return new Response(JSON.stringify({ message: "Logged out successfully" }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
 };
 ```
 
@@ -418,4 +417,3 @@ open http://localhost:3000/dashboard
 ---
 
 **Po dodaniu tych 5 plików, Dashboard będzie w 100% funkcjonalny!** 🎉
-

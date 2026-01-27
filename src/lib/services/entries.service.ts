@@ -136,10 +136,7 @@ export class EntriesService {
    * @param retryAfter - Timestamp when user can create next entry
    * @returns AntiSpamErrorResponseDTO with retry information
    */
-  private buildAntiSpamError(
-    lastEntryCreatedAt: string,
-    retryAfter: string
-  ): AntiSpamErrorResponseDTO {
+  private buildAntiSpamError(lastEntryCreatedAt: string, retryAfter: string): AntiSpamErrorResponseDTO {
     return {
       error: "You can only create one entry every 5 minutes",
       code: "ANTI_SPAM_VIOLATION",

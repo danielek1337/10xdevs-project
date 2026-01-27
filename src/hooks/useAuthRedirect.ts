@@ -19,4 +19,3 @@ export function useAuthRedirect(targetPath: string = "/dashboard") {
     }
   }, [targetPath]);
 }
-

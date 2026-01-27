@@ -3,15 +3,20 @@
 ## 1. WPROWADZENIE
 
 ### 1.1. Cel dokumentu
+
 Niniejszy dokument określa architekturę i wymagania techniczne dla modułu autentykacji w aplikacji VibeCheck, obejmującego funkcjonalności rejestracji, logowania, wylogowania oraz odzyskiwania hasła użytkowników.
 
 ### 1.2. Zakres funkcjonalny
+
 Moduł autentykacji realizuje następujące User Stories z PRD:
+
 - **US-003**: Nowy użytkownik - rejestracja konta, walidacja, logowanie
 - **US-004**: Uwierzytelniony użytkownik - logowanie, zarządzanie sesją, wylogowanie, odzyskiwanie hasła
 
 ### 1.3. Zgodność z istniejącym systemem
+
 Specyfikacja została zaprojektowana z zachowaniem pełnej zgodności z:
+
 - Obecną architekturą Dashboard (DashboardView, PersistentHeader, UserMenu)
 - Istniejącymi endpointami API (/api/entries, /api/tags, /api/focus-scores)
 - Row Level Security (RLS) w Supabase
@@ -19,6 +24,7 @@ Specyfikacja została zaprojektowana z zachowaniem pełnej zgodności z:
 - Konfiguracją SSR w Astro (output: "server")
 
 ### 1.4. Stack technologiczny
+
 - **Frontend**: Astro 5 (SSR), React 19, TypeScript 5, Tailwind 4, Shadcn/ui
 - **Backend**: Astro API Routes, Supabase Auth, Supabase PostgreSQL
 - **Walidacja**: Zod
@@ -31,39 +37,45 @@ Specyfikacja została zaprojektowana z zachowaniem pełnej zgodności z:
 ### 2.1. Struktura stron (Astro Pages)
 
 #### 2.1.1. Strona Landing - `/` (index.astro)
+
 **Status**: DO MODYFIKACJI
 
 **Aktualny stan**:
+
 - Wyświetla statyczny komponent Welcome.astro ze startera
 - Brak elementów związanych z autentykacją
 
 **Wymagane zmiany**:
+
 - Zamiana komponentu Welcome.astro na nowy komponent LandingView
 - Server-side sprawdzenie sesji użytkownika w frontmatter
 - Automatyczne przekierowanie do `/dashboard` dla zalogowanych użytkowników
 - Wyświetlenie przyciągającego landing page z przyciskami "Zaloguj się" i "Zarejestruj się" dla niezalogowanych
 
 **Struktura techniczna**:
+
 ```astro
 ---
 // src/pages/index.astro
-import Layout from '@/layouts/Layout.astro';
-import LandingView from '@/components/LandingView'; // React component
+import Layout from "@/layouts/Layout.astro";
+import LandingView from "@/components/LandingView"; // React component
 
 // Server-side auth check
 const session = await Astro.locals.supabase.auth.getSession();
 
 // Redirect authenticated users to dashboard
 if (session?.data?.session) {
-  return Astro.redirect('/dashboard');
+  return Astro.redirect("/dashboard");
 }
 ---
+
 <Layout title="VibeCheck - Track Your Flow">
   <LandingView client:load />
 </Layout>
 ```
 
 **Komponenty prezentacyjne**:
+
 - Logo i branding aplikacji VibeCheck
 - Hero section z opisem aplikacji i value proposition
 - Call-to-action buttons: "Get Started" (→ /signup) i "Sign In" (→ /login)
@@ -71,139 +83,158 @@ if (session?.data?.session) {
 - Footer z linkami
 
 #### 2.1.2. Strona Logowania - `/login` (login.astro)
+
 **Status**: NOWA
 
 **Cel**: Umożliwienie zalogowania się istniejącym użytkownikom
 
 **Struktura techniczna**:
+
 ```astro
 ---
 // src/pages/login.astro
-import Layout from '@/layouts/Layout.astro';
-import LoginView from '@/components/LoginView'; // React component
+import Layout from "@/layouts/Layout.astro";
+import LoginView from "@/components/LoginView"; // React component
 
 // Server-side auth check
 const session = await Astro.locals.supabase.auth.getSession();
 
 // Redirect authenticated users to dashboard
 if (session?.data?.session) {
-  return Astro.redirect('/dashboard');
+  return Astro.redirect("/dashboard");
 }
 
 // Capture redirect parameter from URL (optional)
-const redirectTo = Astro.url.searchParams.get('redirect') || '/dashboard';
+const redirectTo = Astro.url.searchParams.get("redirect") || "/dashboard";
 ---
+
 <Layout title="Sign In - VibeCheck">
   <LoginView client:load redirectTo={redirectTo} />
 </Layout>
 ```
 
 **Funkcjonalność**:
+
 - Renderuje komponent React LoginView z formularzem logowania
 - Przekierowuje zalogowanych użytkowników do dashboard
 - Obsługuje parametr `?redirect=<path>` dla przekierowań po logowaniu
 - Centrowane na ekranie z minimalistycznym designem
 
 #### 2.1.3. Strona Rejestracji - `/signup` (signup.astro)
+
 **Status**: NOWA
 
 **Cel**: Umożliwienie rejestracji nowych użytkowników
 
 **Struktura techniczna**:
+
 ```astro
 ---
 // src/pages/signup.astro
-import Layout from '@/layouts/Layout.astro';
-import SignupView from '@/components/SignupView'; // React component
+import Layout from "@/layouts/Layout.astro";
+import SignupView from "@/components/SignupView"; // React component
 
 // Server-side auth check
 const session = await Astro.locals.supabase.auth.getSession();
 
 // Redirect authenticated users to dashboard
 if (session?.data?.session) {
-  return Astro.redirect('/dashboard');
+  return Astro.redirect("/dashboard");
 }
 ---
+
 <Layout title="Sign Up - VibeCheck">
   <SignupView client:load />
 </Layout>
 ```
 
 **Funkcjonalność**:
+
 - Renderuje komponent React SignupView z formularzem rejestracji
 - Przekierowuje zalogowanych użytkowników do dashboard
 - Centrowane na ekranie z minimalistycznym designem
 
 #### 2.1.4. Strona Odzyskiwania Hasła - `/forgot-password` (forgot-password.astro)
+
 **Status**: NOWA
 
 **Cel**: Inicjowanie procesu resetowania hasła
 
 **Struktura techniczna**:
+
 ```astro
 ---
 // src/pages/forgot-password.astro
-import Layout from '@/layouts/Layout.astro';
-import ForgotPasswordView from '@/components/ForgotPasswordView'; // React component
+import Layout from "@/layouts/Layout.astro";
+import ForgotPasswordView from "@/components/ForgotPasswordView"; // React component
 
 // Server-side auth check
 const session = await Astro.locals.supabase.auth.getSession();
 
 // Redirect authenticated users to dashboard
 if (session?.data?.session) {
-  return Astro.redirect('/dashboard');
+  return Astro.redirect("/dashboard");
 }
 ---
+
 <Layout title="Forgot Password - VibeCheck">
   <ForgotPasswordView client:load />
 </Layout>
 ```
 
 **Funkcjonalność**:
+
 - Renderuje komponent React ForgotPasswordView
 - Umożliwia wysłanie emaila z linkiem resetującym hasło
 - Przekierowuje zalogowanych użytkowników do dashboard
 
 #### 2.1.5. Strona Resetowania Hasła - `/reset-password` (reset-password.astro)
+
 **Status**: NOWA
 
 **Cel**: Ustawienie nowego hasła po kliknięciu w link z emaila
 
 **Struktura techniczna**:
+
 ```astro
 ---
 // src/pages/reset-password.astro
-import Layout from '@/layouts/Layout.astro';
-import ResetPasswordView from '@/components/ResetPasswordView'; // React component
+import Layout from "@/layouts/Layout.astro";
+import ResetPasswordView from "@/components/ResetPasswordView"; // React component
 
 // Extract tokens from URL hash (Supabase sends tokens in URL hash)
 // This is handled client-side in React component
 ---
+
 <Layout title="Reset Password - VibeCheck">
   <ResetPasswordView client:load />
 </Layout>
 ```
 
 **Funkcjonalność**:
+
 - Renderuje komponent React ResetPasswordView
 - Obsługuje tokeny z URL hash przesłane przez Supabase Auth
 - Umożliwia ustawienie nowego hasła
 - Po sukcesie przekierowuje do `/login`
 
 #### 2.1.6. Strona Dashboard - `/dashboard` (dashboard.astro)
+
 **Status**: DO MODYFIKACJI
 
 **Aktualny stan**:
+
 - Renderuje DashboardView jako client:load
 - Brak server-side auth guard
 - Komentarz: "TODO: Add server-side data fetching for initial state (optional)"
 
 **Wymagane zmiany**:
+
 ```astro
 ---
 // src/pages/dashboard.astro
-import Layout from '@/layouts/Layout.astro';
-import DashboardView from '@/components/DashboardView';
+import Layout from "@/layouts/Layout.astro";
+import DashboardView from "@/components/DashboardView";
 
 // Server-side auth check
 const session = await Astro.locals.supabase.auth.getSession();
@@ -211,7 +242,7 @@ const user = Astro.locals.user;
 
 // Redirect unauthenticated users to login
 if (!session?.data?.session || !user) {
-  return Astro.redirect('/login?redirect=/dashboard');
+  return Astro.redirect("/login?redirect=/dashboard");
 }
 
 // Optional: Fetch initial data server-side for better UX
@@ -220,14 +251,12 @@ if (!session?.data?.session || !user) {
 ---
 
 <Layout title="Dashboard - VibeCheck">
-  <DashboardView 
-    client:load 
-    initialUser={user}
-  />
+  <DashboardView client:load initialUser={user} />
 </Layout>
 ```
 
 **Funkcjonalność**:
+
 - Dodanie server-side auth guard
 - Przekierowanie niezalogowanych użytkowników do `/login`
 - Przekazanie user do DashboardView jako prop (opcjonalnie)
@@ -238,10 +267,12 @@ if (!session?.data?.session || !user) {
 ### 2.2. Komponenty React (Client-side)
 
 #### 2.2.1. LandingView Component
+
 **Plik**: `src/components/LandingView.tsx`  
 **Status**: NOWY
 
 **Odpowiedzialności**:
+
 - Prezentacja głównego landing page dla niezalogowanych użytkowników
 - Nawigacja do stron /login i /signup
 - Wyświetlenie value proposition aplikacji VibeCheck
@@ -249,6 +280,7 @@ if (!session?.data?.session || !user) {
 **Props**: Brak
 
 **Struktura**:
+
 ```typescript
 export default function LandingView() {
   return (
@@ -258,7 +290,7 @@ export default function LandingView() {
         <div className="text-center">
           <h1>VibeCheck - Track Your Productivity Flow</h1>
           <p>Monitor your mood, tasks, and focus levels throughout the day</p>
-          
+
           {/* CTA Buttons */}
           <div className="flex gap-4 justify-center mt-8">
             <Button asChild>
@@ -281,15 +313,18 @@ export default function LandingView() {
 ```
 
 **Zależności**:
+
 - Shadcn/ui Button component
 - Tailwind CSS classes
 - Lucide-react icons (opcjonalnie)
 
 #### 2.2.2. LoginView Component
+
 **Plik**: `src/components/LoginView.tsx`  
 **Status**: NOWY
 
 **Odpowiedzialności**:
+
 - Renderowanie formularza logowania
 - Client-side walidacja danych wejściowych
 - Wywołanie API endpoint `/api/auth/login`
@@ -298,6 +333,7 @@ export default function LandingView() {
 - Link do /forgot-password i /signup
 
 **Props**:
+
 ```typescript
 interface LoginViewProps {
   redirectTo?: string; // URL to redirect after successful login
@@ -305,6 +341,7 @@ interface LoginViewProps {
 ```
 
 **Stan komponentu**:
+
 ```typescript
 interface LoginFormState {
   email: string;
@@ -316,6 +353,7 @@ interface LoginFormState {
 ```
 
 **Struktura**:
+
 ```typescript
 export default function LoginView({ redirectTo = '/dashboard' }: LoginViewProps) {
   const [formState, setFormState] = useState<LoginFormState>({
@@ -359,17 +397,17 @@ export default function LoginView({ redirectTo = '/dashboard' }: LoginViewProps)
       }
 
       const data = await response.json();
-      
+
       // Store session
       storeAuthSession(data.session, formState.rememberMe);
-      
+
       // Redirect to dashboard or specified URL
       window.location.href = redirectTo;
     } catch (error) {
-      setFormState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: error.message 
+      setFormState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error.message
       }));
     }
   };
@@ -406,7 +444,7 @@ export default function LoginView({ redirectTo = '/dashboard' }: LoginViewProps)
             {/* Remember Me Checkbox */}
             <Checkbox
               checked={formState.rememberMe}
-              onCheckedChange={(checked) => 
+              onCheckedChange={(checked) =>
                 setFormState(prev => ({ ...prev, rememberMe: !!checked }))
               }
             />
@@ -434,15 +472,18 @@ export default function LoginView({ redirectTo = '/dashboard' }: LoginViewProps)
 ```
 
 **Zależności**:
+
 - Shadcn/ui: Card, Input, Button, Checkbox, Alert
 - Zod dla walidacji (shared schema)
 - Utility function `storeAuthSession` dla zarządzania sesją
 
 #### 2.2.3. SignupView Component
+
 **Plik**: `src/components/SignupView.tsx`  
 **Status**: NOWY
 
 **Odpowiedzialności**:
+
 - Renderowanie formularza rejestracji
 - Client-side walidacja danych wejściowych
 - Sprawdzenie siły hasła
@@ -456,6 +497,7 @@ export default function LoginView({ redirectTo = '/dashboard' }: LoginViewProps)
 **Props**: Brak
 
 **Stan komponentu**:
+
 ```typescript
 interface SignupFormState {
   email: string;
@@ -467,6 +509,7 @@ interface SignupFormState {
 ```
 
 **Struktura**:
+
 ```typescript
 export default function SignupView() {
   const [formState, setFormState] = useState<SignupFormState>({
@@ -483,10 +526,10 @@ export default function SignupView() {
 
     // Client-side validation
     if (formState.password !== formState.confirmPassword) {
-      setFormState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: 'Passwords do not match' 
+      setFormState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: 'Passwords do not match'
       }));
       return;
     }
@@ -518,15 +561,15 @@ export default function SignupView() {
       }
 
       const data = await response.json();
-      
+
       // Store session and redirect to dashboard
       storeAuthSession(data.session, false);
       window.location.href = '/dashboard';
     } catch (error) {
-      setFormState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: error.message 
+      setFormState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error.message
       }));
     }
   };
@@ -591,18 +634,22 @@ export default function SignupView() {
 ```
 
 **Dodatkowe komponenty pomocnicze**:
+
 - `PasswordStrengthIndicator` - wizualna ocena siły hasła
 
 **Zależności**:
+
 - Shadcn/ui: Card, Input, Button, Alert
 - Zod dla walidacji (shared schema)
 - Utility function `storeAuthSession` dla zarządzania sesją
 
 #### 2.2.4. ForgotPasswordView Component
+
 **Plik**: `src/components/ForgotPasswordView.tsx`  
 **Status**: NOWY
 
 **Odpowiedzialności**:
+
 - Renderowanie formularza do wpisania emaila
 - Client-side walidacja emaila
 - Wywołanie API endpoint `/api/auth/forgot-password`
@@ -612,6 +659,7 @@ export default function SignupView() {
 **Props**: Brak
 
 **Stan komponentu**:
+
 ```typescript
 interface ForgotPasswordState {
   email: string;
@@ -622,6 +670,7 @@ interface ForgotPasswordState {
 ```
 
 **Struktura**:
+
 ```typescript
 export default function ForgotPasswordView() {
   const [state, setState] = useState<ForgotPasswordState>({
@@ -639,10 +688,10 @@ export default function ForgotPasswordView() {
     const validationResult = emailSchema.safeParse({ email: state.email });
 
     if (!validationResult.success) {
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: 'Please enter a valid email address' 
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: 'Please enter a valid email address'
       }));
       return;
     }
@@ -660,16 +709,16 @@ export default function ForgotPasswordView() {
         throw new Error(error.message);
       }
 
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        success: true 
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        success: true
       }));
     } catch (error) {
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: error.message 
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error.message
       }));
     }
   };
@@ -734,14 +783,17 @@ export default function ForgotPasswordView() {
 ```
 
 **Zależności**:
+
 - Shadcn/ui: Card, Input, Button, Alert
 - Zod dla walidacji emaila
 
 #### 2.2.5. ResetPasswordView Component
+
 **Plik**: `src/components/ResetPasswordView.tsx`  
 **Status**: NOWY
 
 **Odpowiedzialności**:
+
 - Odczytanie tokenów z URL hash (Supabase Auth przesyła tokeny w hash)
 - Renderowanie formularza nowego hasła
 - Client-side walidacja hasła
@@ -754,6 +806,7 @@ export default function ForgotPasswordView() {
 **Props**: Brak
 
 **Stan komponentu**:
+
 ```typescript
 interface ResetPasswordState {
   accessToken: string | null;
@@ -767,6 +820,7 @@ interface ResetPasswordState {
 ```
 
 **Struktura**:
+
 ```typescript
 export default function ResetPasswordView() {
   const [state, setState] = useState<ResetPasswordState>({
@@ -787,17 +841,17 @@ export default function ResetPasswordView() {
     const refreshToken = params.get('refresh_token');
 
     if (!accessToken) {
-      setState(prev => ({ 
-        ...prev, 
-        error: 'Invalid or expired reset link' 
+      setState(prev => ({
+        ...prev,
+        error: 'Invalid or expired reset link'
       }));
       return;
     }
 
-    setState(prev => ({ 
-      ...prev, 
-      accessToken, 
-      refreshToken 
+    setState(prev => ({
+      ...prev,
+      accessToken,
+      refreshToken
     }));
   }, []);
 
@@ -805,17 +859,17 @@ export default function ResetPasswordView() {
     e.preventDefault();
 
     if (!state.accessToken) {
-      setState(prev => ({ 
-        ...prev, 
-        error: 'Invalid reset link' 
+      setState(prev => ({
+        ...prev,
+        error: 'Invalid reset link'
       }));
       return;
     }
 
     if (state.password !== state.confirmPassword) {
-      setState(prev => ({ 
-        ...prev, 
-        error: 'Passwords do not match' 
+      setState(prev => ({
+        ...prev,
+        error: 'Passwords do not match'
       }));
       return;
     }
@@ -834,11 +888,11 @@ export default function ResetPasswordView() {
       // Call API endpoint
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${state.accessToken}`,
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           password: state.password,
         }),
       });
@@ -848,10 +902,10 @@ export default function ResetPasswordView() {
         throw new Error(error.message);
       }
 
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        success: true 
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        success: true
       }));
 
       // Redirect to login after 2 seconds
@@ -859,10 +913,10 @@ export default function ResetPasswordView() {
         window.location.href = '/login';
       }, 2000);
     } catch (error) {
-      setState(prev => ({ 
-        ...prev, 
-        isLoading: false, 
-        error: error.message 
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error.message
       }));
     }
   };
@@ -948,26 +1002,31 @@ export default function ResetPasswordView() {
 ```
 
 **Zależności**:
+
 - React useEffect hook
 - Shadcn/ui: Card, Input, Button, Alert
 - Zod dla walidacji hasła
 - PasswordStrengthIndicator component
 
 #### 2.2.6. DashboardView Component
+
 **Status**: DO MODYFIKACJI
 
 **Aktualny stan**:
+
 - Zawiera funkcję `handleLogout` wywołującą `/api/auth/logout`
 - Przekazuje `handleLogout` do `PersistentHeader`
 - Nie pobiera user z props (zakłada dostępność przez API)
 
 **Wymagane zmiany**:
+
 - Opcjonalne: dodanie prop `initialUser?: UserDTO` dla server-side rendered user data
 - Jeśli `initialUser` nie zostanie przekazany, komponent powinien pobrać user z API przy montowaniu
 - Dodanie obsługi błędu 401 (Unauthorized) przy wszystkich wywołaniach API
 - Automatyczne przekierowanie do `/login` przy błędzie 401
 
 **Nowa struktura props**:
+
 ```typescript
 interface DashboardViewProps {
   initialUser?: UserDTO; // Optional server-rendered user
@@ -975,31 +1034,32 @@ interface DashboardViewProps {
 ```
 
 **Poprawka w handleLogout**:
+
 ```typescript
 const handleLogout = useCallback(async () => {
   try {
     const token = getAuthToken();
-    const response = await fetch('/api/auth/logout', {
-      method: 'POST',
+    const response = await fetch("/api/auth/logout", {
+      method: "POST",
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
     if (!response.ok) {
-      throw new Error('Logout failed');
+      throw new Error("Logout failed");
     }
 
     // Clear session from storage
     clearAuthSession();
-    
+
     // Redirect to landing page
-    window.location.href = '/';
+    window.location.href = "/";
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error("Logout error:", error);
     // Even if logout fails on server, clear local session
     clearAuthSession();
-    window.location.href = '/';
+    window.location.href = "/";
   }
 }, []);
 ```
@@ -1007,15 +1067,18 @@ const handleLogout = useCallback(async () => {
 #### 2.2.7. Komponenty pomocnicze
 
 ##### PasswordStrengthIndicator
+
 **Plik**: `src/components/PasswordStrengthIndicator.tsx`  
 **Status**: NOWY
 
 **Odpowiedzialności**:
+
 - Wizualna ocena siły hasła (weak, medium, strong)
 - Wyświetlenie kolorowego paska i tekstu
 - Opcjonalne: lista wymagań (min. długość, wielkie litery, cyfry, znaki specjalne)
 
 **Props**:
+
 ```typescript
 interface PasswordStrengthIndicatorProps {
   password: string;
@@ -1027,37 +1090,35 @@ interface PasswordStrengthIndicatorProps {
 ### 2.3. Walidacja i komunikaty błędów
 
 #### 2.3.1. Schematy walidacji Zod (Shared)
+
 **Plik**: `src/lib/validators/auth.validator.ts`  
 **Status**: NOWY
 
 **Schematy**:
+
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 // Email validation schema
 export const emailSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'Email is required')
-    .email('Invalid email address')
-    .max(255, 'Email is too long'),
+  email: z.string().min(1, "Email is required").email("Invalid email address").max(255, "Email is too long"),
 });
 
 // Password validation schema
 export const passwordSchema = z.object({
   password: z
     .string()
-    .min(8, 'Password must be at least 8 characters')
-    .max(72, 'Password is too long') // Bcrypt limit
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
+    .min(8, "Password must be at least 8 characters")
+    .max(72, "Password is too long") // Bcrypt limit
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
 });
 
 // Login schema
 export const loginSchema = z.object({
   email: emailSchema.shape.email,
-  password: z.string().min(1, 'Password is required'),
+  password: z.string().min(1, "Password is required"),
   rememberMe: z.boolean().optional().default(false),
 });
 
@@ -1111,6 +1172,7 @@ export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
 #### 2.4.1. Scenariusz: Rejestracja nowego użytkownika
 
 **Kroki**:
+
 1. Użytkownik wchodzi na `/` (landing page)
 2. Klika "Get Started" → przekierowanie do `/signup`
 3. Wypełnia formularz: email, password, confirm password
@@ -1126,6 +1188,7 @@ export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
    - Jeśli `requiresEmailConfirmation: false` → zapisanie sesji, przekierowanie do `/dashboard`
 
 **Edge cases**:
+
 - Email już istnieje → błąd "An account with this email already exists"
 - Słabe hasło → walidacja Zod zwraca szczegółowe błędy
 - Network error → komunikat "Please try again"
@@ -1133,6 +1196,7 @@ export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
 #### 2.4.2. Scenariusz: Logowanie istniejącego użytkownika
 
 **Kroki**:
+
 1. Użytkownik wchodzi na `/` (landing page)
 2. Klika "Sign In" → przekierowanie do `/login`
 3. Wypełnia formularz: email, password, remember me
@@ -1147,6 +1211,7 @@ export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
    - Przekierowanie do `/dashboard` lub URL z parametru `?redirect=`
 
 **Edge cases**:
+
 - Nieprawidłowe dane → błąd "Invalid email or password"
 - Email nie potwierdzony → błąd "Please confirm your email address"
 - Zbyt wiele prób logowania → błąd "Too many attempts. Please try again later" (rate limiting)
@@ -1154,6 +1219,7 @@ export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
 #### 2.4.3. Scenariusz: Odzyskiwanie hasła
 
 **Kroki**:
+
 1. Użytkownik na `/login` klika "Forgot password?" → przekierowanie do `/forgot-password`
 2. Wypełnia formularz: email
 3. Kliknięcie "Send Reset Link" → wywołanie `POST /api/auth/forgot-password`
@@ -1175,6 +1241,7 @@ export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
     - Automatyczne przekierowanie do `/login` po 2 sekundach
 
 **Edge cases**:
+
 - Email nie istnieje → (ukryte) "If an account exists, you will receive a reset link"
 - Link wygasł → błąd "Your reset link has expired"
 - Hasło za słabe → walidacja Zod zwraca błędy
@@ -1182,6 +1249,7 @@ export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
 #### 2.4.4. Scenariusz: Wylogowanie
 
 **Kroki**:
+
 1. Użytkownik na `/dashboard` klika UserMenu → "Sign Out"
 2. Wywołanie `handleLogout` w DashboardView
 3. Wywołanie `POST /api/auth/logout` z tokenem w Authorization header
@@ -1193,11 +1261,13 @@ export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
    - Przekierowanie do `/` (landing page)
 
 **Edge cases**:
+
 - Błąd API → mimo błędu, sesja jest czyszczona lokalnie i użytkownik przekierowany
 
 #### 2.4.5. Scenariusz: Dostęp do chronionej strony bez logowania
 
 **Kroki**:
+
 1. Użytkownik (niezalogowany) próbuje wejść na `/dashboard`
 2. Server-side check w `dashboard.astro` frontmatter
 3. Brak sesji → `return Astro.redirect('/login?redirect=/dashboard')`
@@ -1207,6 +1277,7 @@ export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
 #### 2.4.6. Scenariusz: Wygaśnięcie sesji podczas pracy
 
 **Kroki**:
+
 1. Użytkownik pracuje na `/dashboard`
 2. Sesja wygasa (access token expired)
 3. Użytkownik próbuje wykonać akcję (np. dodać entry)
@@ -1217,6 +1288,7 @@ export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
    - Przekierowuje do `/login?redirect=/dashboard`
 
 **Implementacja wykrywania 401**:
+
 - Centralized API client wrapper lub interceptor
 - Każde wywołanie fetch sprawdza response.status === 401
 - Automatyczne przekierowanie
@@ -1228,21 +1300,24 @@ export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
 ### 3.1. Endpointy API
 
 #### 3.1.1. POST /api/auth/signup
+
 **Plik**: `src/pages/api/auth/signup.ts`  
 **Status**: NOWY
 
 **Cel**: Rejestracja nowego użytkownika
 
 **Request**:
+
 ```typescript
 // Body
 {
-  email: string;      // Valid email address
-  password: string;   // Min 8 chars, with uppercase, lowercase, number
+  email: string; // Valid email address
+  password: string; // Min 8 chars, with uppercase, lowercase, number
 }
 ```
 
 **Response (Success - 201)**:
+
 ```typescript
 {
   user: UserDTO;
@@ -1251,11 +1326,12 @@ export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
     refresh_token: string;
     expires_in: number;
     expires_at: number;
-  };
+  }
 }
 ```
 
 **Response (Error - 400)**:
+
 ```typescript
 {
   error: string;      // "Validation failed", "Email already in use"
@@ -1265,18 +1341,20 @@ export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
 ```
 
 **Response (Error - 500)**:
+
 ```typescript
 {
-  error: string;      // "Internal server error"
-  code: string;       // "INTERNAL_ERROR"
+  error: string; // "Internal server error"
+  code: string; // "INTERNAL_ERROR"
 }
 ```
 
 **Implementacja**:
+
 ```typescript
-import type { APIRoute } from 'astro';
-import { signupSchema } from '@/lib/validators/auth.validator';
-import type { UserDTO, ErrorResponseDTO } from '@/types';
+import type { APIRoute } from "astro";
+import { signupSchema } from "@/lib/validators/auth.validator";
+import type { UserDTO, ErrorResponseDTO } from "@/types";
 
 export const prerender = false;
 
@@ -1290,13 +1368,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!validationResult.success) {
       return new Response(
         JSON.stringify({
-          error: 'Validation failed',
-          code: 'VALIDATION_ERROR',
+          error: "Validation failed",
+          code: "VALIDATION_ERROR",
           details: validationResult.error.flatten(),
         } as ErrorResponseDTO),
         {
           status: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -1312,15 +1390,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (error) {
       // Handle specific Supabase errors
-      if (error.message.includes('already registered')) {
+      if (error.message.includes("already registered")) {
         return new Response(
           JSON.stringify({
-            error: 'An account with this email already exists',
-            code: 'EMAIL_EXISTS',
+            error: "An account with this email already exists",
+            code: "EMAIL_EXISTS",
           } as ErrorResponseDTO),
           {
             status: 400,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { "Content-Type": "application/json" },
           }
         );
       }
@@ -1330,7 +1408,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Ensure session exists (email confirmation disabled in Supabase config)
     if (!data.session) {
-      throw new Error('Session not created after signup');
+      throw new Error("Session not created after signup");
     }
 
     // Map Supabase User to UserDTO
@@ -1347,20 +1425,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }),
       {
         status: 201,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }
     );
   } catch (error: unknown) {
-    console.error('Signup error:', error);
+    console.error("Signup error:", error);
 
     return new Response(
       JSON.stringify({
-        error: 'Internal server error',
-        code: 'INTERNAL_ERROR',
+        error: "Internal server error",
+        code: "INTERNAL_ERROR",
       } as ErrorResponseDTO),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }
@@ -1368,21 +1446,25 @@ export const POST: APIRoute = async ({ request, locals }) => {
 ```
 
 **Walidacja**:
+
 - Email: format emaila, max 255 znaków
 - Password: min 8 znaków, zawiera wielką literę, małą literę, cyfrę
 
 **Obsługa błędów**:
+
 - Email już istnieje → 400 EMAIL_EXISTS
 - Nieprawidłowy format danych → 400 VALIDATION_ERROR
 - Błąd Supabase → 500 INTERNAL_ERROR
 
 #### 3.1.2. POST /api/auth/login
+
 **Plik**: `src/pages/api/auth/login.ts`  
 **Status**: NOWY
 
 **Cel**: Logowanie istniejącego użytkownika
 
 **Request**:
+
 ```typescript
 // Body
 {
@@ -1393,6 +1475,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 ```
 
 **Response (Success - 200)**:
+
 ```typescript
 {
   user: UserDTO;
@@ -1401,11 +1484,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     refresh_token: string;
     expires_in: number;
     expires_at: number;
-  };
+  }
 }
 ```
 
 **Response (Error - 400)**:
+
 ```typescript
 {
   error: string;      // "Validation failed"
@@ -1415,26 +1499,29 @@ export const POST: APIRoute = async ({ request, locals }) => {
 ```
 
 **Response (Error - 401)**:
+
 ```typescript
 {
-  error: string;      // "Invalid email or password"
-  code: string;       // "INVALID_CREDENTIALS"
+  error: string; // "Invalid email or password"
+  code: string; // "INVALID_CREDENTIALS"
 }
 ```
 
 **Response (Error - 500)**:
+
 ```typescript
 {
-  error: string;      // "Internal server error"
-  code: string;       // "INTERNAL_ERROR"
+  error: string; // "Internal server error"
+  code: string; // "INTERNAL_ERROR"
 }
 ```
 
 **Implementacja**:
+
 ```typescript
-import type { APIRoute } from 'astro';
-import { loginSchema } from '@/lib/validators/auth.validator';
-import type { UserDTO, ErrorResponseDTO } from '@/types';
+import type { APIRoute } from "astro";
+import { loginSchema } from "@/lib/validators/auth.validator";
+import type { UserDTO, ErrorResponseDTO } from "@/types";
 
 export const prerender = false;
 
@@ -1448,13 +1535,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!validationResult.success) {
       return new Response(
         JSON.stringify({
-          error: 'Validation failed',
-          code: 'VALIDATION_ERROR',
+          error: "Validation failed",
+          code: "VALIDATION_ERROR",
           details: validationResult.error.flatten(),
         } as ErrorResponseDTO),
         {
           status: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -1472,12 +1559,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       // Generic error message for security (don't reveal if email exists)
       return new Response(
         JSON.stringify({
-          error: 'Invalid email or password',
-          code: 'INVALID_CREDENTIALS',
+          error: "Invalid email or password",
+          code: "INVALID_CREDENTIALS",
         } as ErrorResponseDTO),
         {
           status: 401,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -1496,20 +1583,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }),
       {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }
     );
   } catch (error: unknown) {
-    console.error('Login error:', error);
+    console.error("Login error:", error);
 
     return new Response(
       JSON.stringify({
-        error: 'Internal server error',
-        code: 'INTERNAL_ERROR',
+        error: "Internal server error",
+        code: "INTERNAL_ERROR",
       } as ErrorResponseDTO),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }
@@ -1517,39 +1604,46 @@ export const POST: APIRoute = async ({ request, locals }) => {
 ```
 
 **Walidacja**:
+
 - Email: niepuste, format emaila
 - Password: niepuste
 
 **Obsługa błędów**:
+
 - Nieprawidłowe dane → 401 INVALID_CREDENTIALS
 - Email nie potwierdzony → 401 INVALID_CREDENTIALS (lub osobny kod)
 - Nieprawidłowy format danych → 400 VALIDATION_ERROR
 - Błąd Supabase → 500 INTERNAL_ERROR
 
 **Uwaga bezpieczeństwa**:
+
 - Nie ujawniaj czy email istnieje w bazie (generic error message)
 - Rate limiting na poziomie Supabase
 
 #### 3.1.3. POST /api/auth/logout
+
 **Plik**: `src/pages/api/auth/logout.ts`  
 **Status**: ISTNIEJĄCY (bez zmian)
 
 **Cel**: Wylogowanie użytkownika
 
 **Request**:
+
 ```typescript
 // Headers
-Authorization: Bearer <access_token>
+Authorization: Bearer<access_token>;
 ```
 
 **Response (Success - 200)**:
+
 ```typescript
 {
-  message: "Logged out successfully"
+  message: "Logged out successfully";
 }
 ```
 
 **Aktualny kod**:
+
 ```typescript
 export const POST: APIRoute = async ({ locals }) => {
   try {
@@ -1589,16 +1683,19 @@ export const POST: APIRoute = async ({ locals }) => {
 ```
 
 **Uwagi**:
+
 - Obecna implementacja jest OK
 - Wymaga tokenu w Authorization header (sprawdzane przez middleware)
 
 #### 3.1.4. POST /api/auth/forgot-password
+
 **Plik**: `src/pages/api/auth/forgot-password.ts`  
 **Status**: NOWY
 
 **Cel**: Wysłanie emaila z linkiem do resetowania hasła
 
 **Request**:
+
 ```typescript
 // Body
 {
@@ -1607,13 +1704,15 @@ export const POST: APIRoute = async ({ locals }) => {
 ```
 
 **Response (Success - 200)**:
+
 ```typescript
 {
-  message: "If an account with that email exists, you will receive a password reset link"
+  message: "If an account with that email exists, you will receive a password reset link";
 }
 ```
 
 **Response (Error - 400)**:
+
 ```typescript
 {
   error: string;      // "Validation failed"
@@ -1623,18 +1722,20 @@ export const POST: APIRoute = async ({ locals }) => {
 ```
 
 **Response (Error - 500)**:
+
 ```typescript
 {
-  error: string;      // "Internal server error"
-  code: string;       // "INTERNAL_ERROR"
+  error: string; // "Internal server error"
+  code: string; // "INTERNAL_ERROR"
 }
 ```
 
 **Implementacja**:
+
 ```typescript
-import type { APIRoute } from 'astro';
-import { forgotPasswordSchema } from '@/lib/validators/auth.validator';
-import type { MessageResponseDTO, ErrorResponseDTO } from '@/types';
+import type { APIRoute } from "astro";
+import { forgotPasswordSchema } from "@/lib/validators/auth.validator";
+import type { MessageResponseDTO, ErrorResponseDTO } from "@/types";
 
 export const prerender = false;
 
@@ -1648,13 +1749,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!validationResult.success) {
       return new Response(
         JSON.stringify({
-          error: 'Validation failed',
-          code: 'VALIDATION_ERROR',
+          error: "Validation failed",
+          code: "VALIDATION_ERROR",
           details: validationResult.error.flatten(),
         } as ErrorResponseDTO),
         {
           status: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -1670,30 +1771,30 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Don't reveal if email exists (always return success)
     // Supabase won't send email if account doesn't exist
     if (error) {
-      console.error('Password reset error:', error);
+      console.error("Password reset error:", error);
       // Still return success to user for security
     }
 
     return new Response(
       JSON.stringify({
-        message: 'If an account with that email exists, you will receive a password reset link',
+        message: "If an account with that email exists, you will receive a password reset link",
       } as MessageResponseDTO),
       {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }
     );
   } catch (error: unknown) {
-    console.error('Forgot password error:', error);
+    console.error("Forgot password error:", error);
 
     return new Response(
       JSON.stringify({
-        error: 'Internal server error',
-        code: 'INTERNAL_ERROR',
+        error: "Internal server error",
+        code: "INTERNAL_ERROR",
       } as ErrorResponseDTO),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }
@@ -1701,27 +1802,32 @@ export const POST: APIRoute = async ({ request, locals }) => {
 ```
 
 **Walidacja**:
+
 - Email: niepuste, format emaila
 
 **Obsługa błędów**:
+
 - Nieprawidłowy format emaila → 400 VALIDATION_ERROR
 - Email nie istnieje → 200 (ukryte dla bezpieczeństwa)
 - Błąd Supabase → 500 INTERNAL_ERROR
 
 **Uwaga bezpieczeństwa**:
+
 - Zawsze zwracaj 200 (nie ujawniaj czy email istnieje)
 - Supabase automatycznie nie wyśle emaila jeśli konto nie istnieje
 
 #### 3.1.5. POST /api/auth/reset-password
+
 **Plik**: `src/pages/api/auth/reset-password.ts`  
 **Status**: NOWY
 
 **Cel**: Ustawienie nowego hasła po kliknięciu w link z emaila
 
 **Request**:
+
 ```typescript
 // Headers
-Authorization: Bearer <access_token_from_email_link>
+Authorization: Bearer<access_token_from_email_link>;
 
 // Body
 {
@@ -1730,13 +1836,15 @@ Authorization: Bearer <access_token_from_email_link>
 ```
 
 **Response (Success - 200)**:
+
 ```typescript
 {
-  message: "Password reset successful"
+  message: "Password reset successful";
 }
 ```
 
 **Response (Error - 400)**:
+
 ```typescript
 {
   error: string;      // "Validation failed"
@@ -1746,26 +1854,29 @@ Authorization: Bearer <access_token_from_email_link>
 ```
 
 **Response (Error - 401)**:
+
 ```typescript
 {
-  error: string;      // "Invalid or expired reset token"
-  code: string;       // "INVALID_TOKEN"
+  error: string; // "Invalid or expired reset token"
+  code: string; // "INVALID_TOKEN"
 }
 ```
 
 **Response (Error - 500)**:
+
 ```typescript
 {
-  error: string;      // "Internal server error"
-  code: string;       // "INTERNAL_ERROR"
+  error: string; // "Internal server error"
+  code: string; // "INTERNAL_ERROR"
 }
 ```
 
 **Implementacja**:
+
 ```typescript
-import type { APIRoute } from 'astro';
-import { resetPasswordSchema } from '@/lib/validators/auth.validator';
-import type { MessageResponseDTO, ErrorResponseDTO } from '@/types';
+import type { APIRoute } from "astro";
+import { resetPasswordSchema } from "@/lib/validators/auth.validator";
+import type { MessageResponseDTO, ErrorResponseDTO } from "@/types";
 
 export const prerender = false;
 
@@ -1779,13 +1890,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!validationResult.success) {
       return new Response(
         JSON.stringify({
-          error: 'Validation failed',
-          code: 'VALIDATION_ERROR',
+          error: "Validation failed",
+          code: "VALIDATION_ERROR",
           details: validationResult.error.flatten(),
         } as ErrorResponseDTO),
         {
           status: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -1797,12 +1908,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!user) {
       return new Response(
         JSON.stringify({
-          error: 'Invalid or expired reset token',
-          code: 'INVALID_TOKEN',
+          error: "Invalid or expired reset token",
+          code: "INVALID_TOKEN",
         } as ErrorResponseDTO),
         {
           status: 401,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
@@ -1818,24 +1929,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return new Response(
       JSON.stringify({
-        message: 'Password reset successful',
+        message: "Password reset successful",
       } as MessageResponseDTO),
       {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }
     );
   } catch (error: unknown) {
-    console.error('Reset password error:', error);
+    console.error("Reset password error:", error);
 
     return new Response(
       JSON.stringify({
-        error: 'Internal server error',
-        code: 'INTERNAL_ERROR',
+        error: "Internal server error",
+        code: "INTERNAL_ERROR",
       } as ErrorResponseDTO),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
       }
     );
   }
@@ -1843,9 +1954,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
 ```
 
 **Walidacja**:
+
 - Password: min 8 znaków, zawiera wielką literę, małą literę, cyfrę
 
 **Obsługa błędów**:
+
 - Brak/nieprawidłowy token → 401 INVALID_TOKEN
 - Nieprawidłowy format hasła → 400 VALIDATION_ERROR
 - Błąd Supabase → 500 INTERNAL_ERROR
@@ -1855,6 +1968,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 ### 3.2. Modele danych (DTOs)
 
 #### 3.2.1. UserDTO
+
 **Plik**: `src/types.ts` (istniejący)  
 **Status**: DO DODANIA
 
@@ -1864,13 +1978,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
  * Represents authenticated user information
  */
 export interface UserDTO {
-  id: string;           // UUID from auth.users
-  email: string;        // User's email address
-  createdAt: string;    // ISO timestamp
+  id: string; // UUID from auth.users
+  email: string; // User's email address
+  createdAt: string; // ISO timestamp
 }
 ```
 
 #### 3.2.2. AuthSessionDTO
+
 **Plik**: `src/types.ts` (istniejący)  
 **Status**: DO DODANIA
 
@@ -1880,15 +1995,16 @@ export interface UserDTO {
  * Contains tokens and expiration info
  */
 export interface AuthSessionDTO {
-  access_token: string;   // JWT access token
-  refresh_token: string;  // JWT refresh token
-  expires_in: number;     // Seconds until expiration
-  expires_at: number;     // Unix timestamp of expiration
-  token_type: 'bearer';   // Token type
+  access_token: string; // JWT access token
+  refresh_token: string; // JWT refresh token
+  expires_in: number; // Seconds until expiration
+  expires_at: number; // Unix timestamp of expiration
+  token_type: "bearer"; // Token type
 }
 ```
 
 #### 3.2.3. LoginResponseDTO
+
 **Plik**: `src/types.ts` (istniejący)  
 **Status**: DO DODANIA
 
@@ -1903,6 +2019,7 @@ export interface LoginResponseDTO {
 ```
 
 #### 3.2.4. SignupResponseDTO
+
 **Plik**: `src/types.ts` (istniejący)  
 **Status**: DO DODANIA
 
@@ -1921,16 +2038,19 @@ export interface SignupResponseDTO {
 ### 3.3. Middleware - Rozszerzenie
 
 #### 3.3.1. Obecna implementacja
+
 **Plik**: `src/middleware/index.ts`  
 **Status**: DO MODYFIKACJI
 
 **Aktualny stan**:
+
 - Pobiera token z Authorization header
 - Weryfikuje token przez Supabase Auth `getUser(token)`
 - Dodaje `user` i `supabase` do `context.locals`
 - Nie blokuje dostępu do żadnych stron
 
 **Wymagane zmiany**:
+
 1. Dodanie listy chronionych ścieżek
 2. Server-side redirect niezalogowanych użytkowników z chronionych ścieżek do `/login`
 3. Dodanie listy publicznych ścieżek (auth pages)
@@ -1938,25 +2058,26 @@ export interface SignupResponseDTO {
 5. Obsługa sesji z cookies (opcjonalnie, jeśli chcemy SSR session management)
 
 **Nowa implementacja**:
+
 ```typescript
-import { defineMiddleware } from 'astro:middleware';
-import { supabaseClient } from '../db/supabase.client.ts';
+import { defineMiddleware } from "astro:middleware";
+import { supabaseClient } from "../db/supabase.client.ts";
 
 /**
  * Protected routes - require authentication
  */
-const PROTECTED_ROUTES = ['/dashboard'];
+const PROTECTED_ROUTES = ["/dashboard"];
 
 /**
  * Auth routes - redirect authenticated users away
  */
-const AUTH_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password'];
+const AUTH_ROUTES = ["/login", "/signup", "/forgot-password", "/reset-password"];
 
 /**
  * Check if path matches any route pattern
  */
 function matchesRoute(path: string, routes: string[]): boolean {
-  return routes.some(route => path === route || path.startsWith(`${route}/`));
+  return routes.some((route) => path === route || path.startsWith(`${route}/`));
 }
 
 /**
@@ -1974,8 +2095,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.supabase = supabaseClient;
 
   // Extract token from Authorization header
-  const authHeader = context.request.headers.get('Authorization');
-  const token = authHeader?.replace('Bearer ', '');
+  const authHeader = context.request.headers.get("Authorization");
+  const token = authHeader?.replace("Bearer ", "");
 
   // If token exists, verify and get user
   if (token) {
@@ -1991,7 +2112,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
         context.locals.user = null;
       }
     } catch (error) {
-      console.error('Error verifying token:', error);
+      console.error("Error verifying token:", error);
       context.locals.user = null;
     }
   } else {
@@ -2013,15 +2134,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
   if (matchesRoute(pathname, AUTH_ROUTES)) {
     if (isAuthenticated) {
       // Redirect to dashboard
-      return context.redirect('/dashboard');
+      return context.redirect("/dashboard");
     }
   }
 
   // Landing page special handling
-  if (pathname === '/') {
+  if (pathname === "/") {
     if (isAuthenticated) {
       // Redirect to dashboard
-      return context.redirect('/dashboard');
+      return context.redirect("/dashboard");
     }
   }
 
@@ -2030,6 +2151,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 ```
 
 **Kluczowe zmiany**:
+
 1. Dodano `PROTECTED_ROUTES` - lista ścieżek wymagających autentykacji
 2. Dodano `AUTH_ROUTES` - lista ścieżek auth (login, signup, etc.)
 3. Dodano funkcję `matchesRoute` - sprawdzanie czy ścieżka pasuje do wzorca
@@ -2038,14 +2160,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
 6. Dodano specjalną obsługę landing page (`/`) - redirect zalogowanych do dashboard
 
 **Uwagi**:
+
 - Middleware jest wywoływane dla KAŻDEGO requestu (zarówno stron jak i API)
 - API endpoints (`/api/*`) nie powinny być redirectowane - powinny zwracać 401
 - Możliwe rozszerzenie: dodać wykluczenie API routes z redirect logic
 
 **Opcjonalne rozszerzenie - wykluczenie API routes**:
+
 ```typescript
 // At the beginning of middleware
-const isApiRoute = pathname.startsWith('/api/');
+const isApiRoute = pathname.startsWith("/api/");
 
 // Skip redirect logic for API routes (they handle their own auth)
 if (!isApiRoute) {
@@ -2058,26 +2182,25 @@ if (!isApiRoute) {
 ### 3.4. Zarządzanie sesją (Client-side utilities)
 
 #### 3.4.1. Session Storage Utils
+
 **Plik**: `src/lib/utils/session.utils.ts`  
 **Status**: NOWY
 
 **Cel**: Centralne zarządzanie zapisem i odczytem sesji w localStorage/sessionStorage
 
 **Implementacja**:
-```typescript
-import type { AuthSessionDTO } from '@/types';
 
-const SESSION_KEY = 'vibecheck_session';
+```typescript
+import type { AuthSessionDTO } from "@/types";
+
+const SESSION_KEY = "vibecheck_session";
 
 /**
  * Store authentication session
  * @param session - Supabase session object
  * @param persistent - If true, store in localStorage; if false, store in sessionStorage
  */
-export function storeAuthSession(
-  session: AuthSessionDTO, 
-  persistent: boolean = false
-): void {
+export function storeAuthSession(session: AuthSessionDTO, persistent: boolean = false): void {
   const storage = persistent ? localStorage : sessionStorage;
   storage.setItem(SESSION_KEY, JSON.stringify(session));
 }
@@ -2141,14 +2264,16 @@ export function hasValidSession(): boolean {
 ```
 
 #### 3.4.2. API Client Wrapper
+
 **Plik**: `src/lib/utils/api-client.utils.ts`  
 **Status**: NOWY
 
 **Cel**: Wrapper dla fetch z automatycznym dodawaniem tokenu i obsługą 401
 
 **Implementacja**:
+
 ```typescript
-import { getAuthToken, clearAuthSession } from './session.utils';
+import { getAuthToken, clearAuthSession } from "./session.utils";
 
 /**
  * Options for API client
@@ -2160,10 +2285,7 @@ export interface ApiClientOptions extends RequestInit {
 /**
  * API Client wrapper with automatic token injection and 401 handling
  */
-export async function apiClient(
-  url: string,
-  options: ApiClientOptions = {}
-): Promise<Response> {
+export async function apiClient(url: string, options: ApiClientOptions = {}): Promise<Response> {
   const { skipAuth = false, ...fetchOptions } = options;
 
   // Prepare headers
@@ -2173,13 +2295,13 @@ export async function apiClient(
   if (!skipAuth) {
     const token = getAuthToken();
     if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
+      headers.set("Authorization", `Bearer ${token}`);
     }
   }
 
   // Add Content-Type if not set and body is present
-  if (fetchOptions.body && !headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json');
+  if (fetchOptions.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
   }
 
   // Make request
@@ -2191,13 +2313,13 @@ export async function apiClient(
   // Handle 401 Unauthorized - session expired
   if (response.status === 401) {
     clearAuthSession();
-    
+
     // Redirect to login with current path as redirect param
     const currentPath = window.location.pathname;
     window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
-    
+
     // Throw error to stop further processing
-    throw new Error('Session expired');
+    throw new Error("Session expired");
   }
 
   return response;
@@ -2205,33 +2327,37 @@ export async function apiClient(
 ```
 
 **Użycie w komponentach**:
+
 ```typescript
 // Instead of fetch
-const response = await fetch('/api/entries', {
-  method: 'GET',
+const response = await fetch("/api/entries", {
+  method: "GET",
   headers: {
-    'Authorization': `Bearer ${token}`,
+    Authorization: `Bearer ${token}`,
   },
 });
 
 // Use apiClient
-const response = await apiClient('/api/entries', {
-  method: 'GET',
+const response = await apiClient("/api/entries", {
+  method: "GET",
 });
 ```
 
 #### 3.4.3. Refresh Token Logic (Opcjonalne)
+
 **Plik**: `src/lib/utils/session.utils.ts` (rozszerzenie)  
 **Status**: OPCJONALNE
 
 **Cel**: Automatyczne odświeżanie tokenu przed wygaśnięciem
 
 **Uwagi**:
+
 - Supabase Auth automatycznie odświeża tokeny przez refresh token
 - Wymaga integracji Supabase client w aplikacji React
 - Można zaimplementować jako React hook `useAuthRefresh`
 
 **Przykładowa implementacja**:
+
 ```typescript
 /**
  * Refresh access token using refresh token
@@ -2244,7 +2370,7 @@ export async function refreshAuthSession(): Promise<AuthSessionDTO | null> {
   try {
     // Create temporary Supabase client
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
+
     // Refresh session
     const { data, error } = await supabase.auth.refreshSession({
       refresh_token: session.refresh_token,
@@ -2261,7 +2387,7 @@ export async function refreshAuthSession(): Promise<AuthSessionDTO | null> {
 
     return data.session;
   } catch (error) {
-    console.error('Token refresh error:', error);
+    console.error("Token refresh error:", error);
     clearAuthSession();
     return null;
   }
@@ -2274,25 +2400,27 @@ export async function refreshAuthSession(): Promise<AuthSessionDTO | null> {
 
 #### 3.5.1. Session retrieval w stronach Astro
 
-**Strategia: Token-based (Authorization Header)**  
+**Strategia: Token-based (Authorization Header)**
+
 - Frontend przechowuje token w localStorage/sessionStorage
 - Każde wywołanie API dodaje token w Authorization header
 - Server-side strony Astro sprawdzają sesję przez middleware (context.locals.user)
 - Middleware automatycznie weryfikuje token i dodaje user do locals
 
 **Implementacja w stronach Astro**:
+
 ```astro
 ---
 // src/pages/dashboard.astro
-import Layout from '@/layouts/Layout.astro';
-import DashboardView from '@/components/DashboardView';
+import Layout from "@/layouts/Layout.astro";
+import DashboardView from "@/components/DashboardView";
 
 // Server-side auth check przez middleware
 const user = Astro.locals.user;
 
 // Redirect unauthenticated users to login
 if (!user) {
-  return Astro.redirect('/login?redirect=/dashboard');
+  return Astro.redirect("/login?redirect=/dashboard");
 }
 
 // Optional: Fetch initial data server-side for better UX
@@ -2301,14 +2429,12 @@ if (!user) {
 ---
 
 <Layout title="Dashboard - VibeCheck">
-  <DashboardView 
-    client:load 
-    initialUser={user}
-  />
+  <DashboardView client:load initialUser={user} />
 </Layout>
 ```
 
 **Uwagi**:
+
 - Middleware automatycznie sprawdza token z Authorization header przy każdym request
 - Strony Astro mają dostęp do user przez `Astro.locals.user`
 - Dla API calls, frontend używa apiClient wrapper który dodaje token
@@ -2321,9 +2447,11 @@ if (!user) {
 ### 4.1. Konfiguracja Supabase Auth
 
 #### 4.1.1. Email Settings
+
 **Lokalizacja**: Supabase Dashboard → Authentication → Settings
 
 **Konfiguracja**:
+
 - **Email Provider**: Supabase default SMTP (lub custom SMTP)
 - **Enable Email Confirmations**: **DISABLED** (zgodnie z PRD - brak wymagania)
   - Użytkownicy mogą zalogować się natychmiast po rejestracji
@@ -2331,18 +2459,23 @@ if (!user) {
   - Password reset email (jedyny używany email template)
 
 **Redirect URLs**:
+
 - **Site URL**: `https://vibecheck.app` (lub URL produkcyjny)
 - **Redirect URLs (allowed)**:
   - `http://localhost:4321/reset-password` (development)
   - `https://vibecheck.app/reset-password` (production)
 
 #### 4.1.2. Authentication Providers
+
 **Konfiguracja**:
+
 - **Email/Password**: ENABLED
 - **OAuth Providers (Google, GitHub, etc.)**: DISABLED (zgodnie z PRD)
 
 #### 4.1.3. Security Settings
+
 **Konfiguracja**:
+
 - **JWT Expiry**: 3600 seconds (1 hour) - default
 - **Refresh Token Rotation**: Enabled (automatic)
 - **Reuse Interval**: 10 seconds
@@ -2351,7 +2484,9 @@ if (!user) {
   - Wymaga: wielkie litery, małe litery, cyfry (enforced przez Zod validator)
 
 #### 4.1.4. Rate Limiting
+
 **Supabase automatyczne rate limiting**:
+
 - Signup: 10 requests per hour per IP
 - Login: 30 requests per hour per email
 - Password reset: 5 requests per hour per IP
@@ -2361,7 +2496,9 @@ if (!user) {
 ### 4.2. Supabase Auth Flow
 
 #### 4.2.1. Rejestracja (Sign Up)
+
 **Flow**:
+
 1. Frontend: użytkownik wypełnia formularz SignupView
 2. Frontend: wywołanie `POST /api/auth/signup` z email i password
 3. Backend: walidacja Zod
@@ -2375,12 +2512,15 @@ if (!user) {
    - Przekierowuje do `/dashboard`
 
 **Edge cases**:
+
 - Email już istnieje → błąd "An account with this email already exists"
 - Słabe hasło → walidacja Zod zwraca szczegółowe błędy
 - Network error → komunikat "Please try again"
 
 #### 4.2.2. Logowanie (Sign In)
+
 **Flow**:
+
 1. Frontend: użytkownik wypełnia formularz LoginView
 2. Frontend: wywołanie `POST /api/auth/login` z email i password
 3. Backend: walidacja Zod
@@ -2394,11 +2534,14 @@ if (!user) {
    - Przekierowuje do `/dashboard` lub URL z parametru `?redirect=`
 
 **Edge cases**:
+
 - Nieprawidłowe dane → błąd "Invalid email or password"
 - Zbyt wiele prób logowania → błąd "Too many attempts. Please try again later" (rate limiting)
 
 #### 4.2.3. Wylogowanie (Sign Out)
+
 **Flow**:
+
 1. Frontend: użytkownik klika "Sign Out" w UserMenu
 2. Frontend: wywołanie `POST /api/auth/logout` z tokenem w Authorization header
 3. Backend: middleware weryfikuje token, dodaje user do locals
@@ -2410,7 +2553,9 @@ if (!user) {
    - Przekierowuje do `/` (landing page)
 
 #### 4.2.4. Odzyskiwanie hasła (Password Reset)
+
 **Flow**:
+
 1. Frontend: użytkownik wypełnia formularz ForgotPasswordView z emailem
 2. Frontend: wywołanie `POST /api/auth/forgot-password` z email
 3. Backend: walidacja Zod
@@ -2439,7 +2584,9 @@ if (!user) {
 ### 4.3. Token Management
 
 #### 4.3.1. Access Token (JWT)
+
 **Charakterystyka**:
+
 - Format: JWT (JSON Web Token)
 - Zawartość: user_id, email, role, exp, iat
 - Ważność: 1 godzina (3600 seconds)
@@ -2447,18 +2594,22 @@ if (!user) {
 - Użycie: Header `Authorization: Bearer <token>` przy każdym API call
 
 **Weryfikacja**:
+
 - Middleware: `supabase.auth.getUser(token)`
 - Sprawdza czy token jest ważny, nie wygasł, nie został unieważniony
 - Zwraca user object lub error
 
 #### 4.3.2. Refresh Token
+
 **Charakterystyka**:
+
 - Format: Opaque token (random string)
 - Ważność: 30 dni (default Supabase)
 - Przechowywanie: localStorage (jeśli remember me) lub sessionStorage
 - Użycie: Automatyczne odświeżanie access tokenu
 
 **Refresh Flow**:
+
 1. Access token wygasa (po 1 godzinie)
 2. Frontend wykrywa 401 przy API call
 3. Frontend wywołuje `supabase.auth.refreshSession({ refresh_token })`
@@ -2469,6 +2620,7 @@ if (!user) {
 6. Frontend: powtarza pierwotny API call z nowym tokenem
 
 **Implementacja w React**:
+
 - Hook `useAuthRefresh` monitoruje ważność tokenu
 - Automatycznie odświeża token ~5 minut przed wygaśnięciem
 - Lub: odświeża dopiero przy błędzie 401
@@ -2480,11 +2632,13 @@ if (!user) {
 #### 4.4.1. Jak RLS współpracuje z Auth
 
 **Mechanizm**:
+
 - Supabase Auth ustawia `auth.uid()` w kontekście PostgreSQL session
 - RLS policies w bazie danych odwołują się do `auth.uid()`
 - Przykład policy: `user_id = auth.uid()`
 
 **Flow**:
+
 1. Frontend: wywołanie API z tokenem w Authorization header
 2. Middleware: weryfikacja tokenu, dodanie user do locals
 3. API endpoint: użycie `locals.supabase` do query bazy
@@ -2493,12 +2647,10 @@ if (!user) {
 6. Tylko dane należące do zalogowanego użytkownika są zwracane/modyfikowane
 
 **Przykład**:
+
 ```typescript
 // API endpoint: GET /api/entries
-const { data, error } = await locals.supabase
-  .from('entries')
-  .select('*')
-  .order('created_at', { ascending: false });
+const { data, error } = await locals.supabase.from("entries").select("*").order("created_at", { ascending: false });
 
 // RLS policy automatycznie filtruje:
 // WHERE user_id = auth.uid()
@@ -2508,22 +2660,26 @@ const { data, error } = await locals.supabase
 #### 4.4.2. Istniejące RLS Policies w VibeCheck
 
 **Tabela: public.entries**
+
 - `entries_select_own_policy`: SELECT tylko dla user_id = auth.uid()
 - `entries_insert_own_policy`: INSERT tylko z user_id = auth.uid()
 - `entries_update_own_policy`: UPDATE tylko dla user_id = auth.uid()
 - `entries_delete_own_policy`: DELETE tylko dla user_id = auth.uid()
 
 **Tabela: public.tags**
+
 - `tags_select_all_policy`: SELECT dla wszystkich authenticated users
 - `tags_insert_policy`: INSERT dla wszystkich authenticated users
 - Brak UPDATE/DELETE policies (tags immutable)
 
 **Tabela: public.entry_tags**
+
 - `entry_tags_select_own_policy`: SELECT tylko dla tagów należących do własnych entries
 - `entry_tags_insert_own_policy`: INSERT tylko do własnych entries
 - `entry_tags_delete_own_policy`: DELETE tylko z własnych entries
 
 **Impact na Auth Module**:
+
 - RLS automatycznie zapewnia data isolation między użytkownikami
 - Nie trzeba manualnie filtrować po user_id w query
 - Bezpieczeństwo na poziomie bazy danych (defense in depth)
@@ -2536,20 +2692,24 @@ const { data, error } = await locals.supabase
 ### 5.1. Obsługa błędów i edge cases
 
 #### 5.1.1. Network Errors
+
 - Timeout przy API calls: komunikat "Request timed out. Please try again"
 - Offline: komunikat "You appear to be offline. Please check your connection"
 - Implementacja: try-catch w każdym API call, sprawdzenie `navigator.onLine`
 
 #### 5.1.2. Validation Errors
+
 - Zod validation failures: wyświetlenie szczegółowych komunikatów pod polami formularza
 - Przykład: "Password must contain at least one uppercase letter"
 
 #### 5.1.3. Auth Errors
+
 - Email już istnieje: "An account with this email already exists"
 - Nieprawidłowe dane logowania: "Invalid email or password"
 - Token wygasł: automatyczne przekierowanie do `/login` z komunikatem
 
 #### 5.1.4. Rate Limiting
+
 - Supabase rate limiting: komunikat "Too many attempts. Please try again later"
 - Client-side: disable button po submit, prevent double-submit
 
@@ -2558,16 +2718,19 @@ const { data, error } = await locals.supabase
 ### 5.2. Accessibility (A11Y)
 
 #### 5.2.1. Keyboard Navigation
+
 - Wszystkie formularze dostępne przez klawiaturę (Tab navigation)
 - Focus indicators na wszystkich interaktywnych elementach
 - Enter key submits form
 
 #### 5.2.2. Screen Readers
+
 - ARIA labels dla wszystkich inputów
 - ARIA live regions dla error messages
 - Semantic HTML (form, label, input, button)
 
 #### 5.2.3. Error Announcements
+
 - Alert components z `role="alert"` dla komunikatów błędów
 - Automatyczne ogłaszanie błędów przez screen readery
 
@@ -2576,14 +2739,17 @@ const { data, error } = await locals.supabase
 ### 5.3. Performance
 
 #### 5.3.1. Code Splitting
+
 - Lazy loading komponentów auth przez React.lazy() (opcjonalnie)
 - Astro automatycznie splituje komponenty z `client:load`
 
 #### 5.3.2. Bundle Size
+
 - Shadcn/ui components są tree-shakeable
 - Import tylko używanych komponentów Lucide-react icons
 
 #### 5.3.3. Initial Load Time
+
 - SSR strony Astro dla szybkiego initial render
 - Hydration React komponentów only gdzie potrzebna interaktywność
 
@@ -2592,25 +2758,30 @@ const { data, error } = await locals.supabase
 ### 5.4. Security Best Practices
 
 #### 5.4.1. XSS Prevention
+
 - React automatycznie escapuje content
 - Nie używać `dangerouslySetInnerHTML`
 
 #### 5.4.2. CSRF Protection
+
 - Supabase Auth używa JWT (stateless)
 - Brak potrzeby CSRF tokens dla API
 
 #### 5.4.3. Password Security
+
 - Hasła nigdy nie są przechowywane plain text
 - Supabase Auth używa bcrypt
 - Walidacja siły hasła przed wysłaniem
 
 #### 5.4.4. Token Security
+
 - Access token w localStorage/sessionStorage
 - Short-lived tokens (1 hour) minimalizują ryzyko
 - Refresh token rotation (automatic Supabase)
 - HTTPS only w produkcji
 
 #### 5.4.5. Information Disclosure Prevention
+
 - Nie ujawniaj czy email istnieje podczas password reset
 - Generic error message przy login failure
 
@@ -2619,39 +2790,47 @@ const { data, error } = await locals.supabase
 ### 5.5. Testing Strategy (Przygotowanie do implementacji testów)
 
 **Wymagania zgodne z PRD**:
+
 - **Test Coverage**: Minimum 95% dla business logic (validators, services, utils)
 - **CI/CD**: Wszystkie testy muszą przejść przed deploymentem
 - **Test Reports**: Generowanie raportów coverage w GitHub Actions
 
 #### 5.5.1. Unit Tests (Vitest)
+
 **Komponenty do przetestowania**:
+
 - `src/lib/validators/auth.validator.ts`: wszystkie schematy Zod
 - `src/lib/utils/session.utils.ts`: wszystkie funkcje zarządzania sesją
 - `src/lib/utils/api-client.utils.ts`: wrapper API client
 
 **Przykładowe testy**:
+
 ```typescript
 // auth.validator.test.ts
-describe('loginSchema', () => {
-  it('should accept valid email and password', () => {
+describe("loginSchema", () => {
+  it("should accept valid email and password", () => {
     const result = loginSchema.parse({
-      email: 'test@example.com',
-      password: 'password123',
+      email: "test@example.com",
+      password: "password123",
     });
     expect(result).toBeDefined();
   });
 
-  it('should reject invalid email', () => {
-    expect(() => loginSchema.parse({
-      email: 'invalid-email',
-      password: 'password123',
-    })).toThrow();
+  it("should reject invalid email", () => {
+    expect(() =>
+      loginSchema.parse({
+        email: "invalid-email",
+        password: "password123",
+      })
+    ).toThrow();
   });
 });
 ```
 
 #### 5.5.2. E2E Tests (Playwright)
+
 **Scenariusze do przetestowania**:
+
 1. **Signup Flow**:
    - Otwórz `/signup`
    - Wypełnij formularz z unique email i strong password
@@ -2699,6 +2878,7 @@ describe('loginSchema', () => {
 ## 6. PLAN IMPLEMENTACJI (High-level Overview)
 
 ### 6.1. Faza 1: Backend Infrastructure
+
 1. **Stwórz walidatory Zod**: `src/lib/validators/auth.validator.ts`
 2. **Stwórz session utils**: `src/lib/utils/session.utils.ts`
 3. **Stwórz API client wrapper**: `src/lib/utils/api-client.utils.ts`
@@ -2711,6 +2891,7 @@ describe('loginSchema', () => {
 6. **Zaktualizuj middleware**: dodaj route protection logic
 
 ### 6.2. Faza 2: Frontend Components
+
 1. **Stwórz komponenty pomocnicze**:
    - `src/components/PasswordStrengthIndicator.tsx`
 2. **Stwórz komponenty auth**:
@@ -2722,6 +2903,7 @@ describe('loginSchema', () => {
 3. **Zaktualizuj DashboardView**: dodaj prop `initialUser`, popraw `handleLogout`
 
 ### 6.3. Faza 3: Astro Pages
+
 1. **Zaktualizuj index.astro**: dodaj server-side check i LandingView
 2. **Stwórz login.astro**: z LoginView
 3. **Stwórz signup.astro**: z SignupView
@@ -2730,6 +2912,7 @@ describe('loginSchema', () => {
 6. **Zaktualizuj dashboard.astro**: dodaj server-side auth guard
 
 ### 6.4. Faza 4: Supabase Configuration
+
 1. **Skonfiguruj Supabase Auth**:
    - Email settings (disable email confirmation)
    - Redirect URLs (reset password only)
@@ -2737,12 +2920,14 @@ describe('loginSchema', () => {
 2. **Testuj email delivery**: password reset emails
 
 ### 6.5. Faza 5: Testing
+
 1. **Napisz unit testy**: validators, session utils, api client (target: 95%+ coverage)
 2. **Napisz E2E testy**: signup, login, logout, password reset, protected routes
 3. **Konfiguruj coverage reports**: Vitest coverage z threshold 95%
 4. **Uruchom testy w CI/CD**: dodaj do GitHub Actions z coverage reporting
 
 ### 6.6. Faza 6: Polish & Documentation
+
 1. **Accessibility audit**: keyboard navigation, screen readers
 2. **Performance audit**: bundle size, load time
 3. **Security audit**: XSS, CSRF, token management
@@ -2756,6 +2941,7 @@ describe('loginSchema', () => {
 ### 7.1. Kluczowe komponenty do implementacji
 
 **Backend (Astro API Routes)**:
+
 - [ ] `src/pages/api/auth/signup.ts` - rejestracja
 - [ ] `src/pages/api/auth/login.ts` - logowanie
 - [ ] `src/pages/api/auth/forgot-password.ts` - inicjowanie resetowania hasła
@@ -2763,6 +2949,7 @@ describe('loginSchema', () => {
 - [ ] `src/middleware/index.ts` - rozszerzenie o route protection
 
 **Frontend (React Components)**:
+
 - [ ] `src/components/LandingView.tsx` - landing page dla niezalogowanych
 - [ ] `src/components/LoginView.tsx` - formularz logowania
 - [ ] `src/components/SignupView.tsx` - formularz rejestracji
@@ -2772,6 +2959,7 @@ describe('loginSchema', () => {
 - [ ] `src/components/DashboardView.tsx` - modyfikacja (initialUser prop)
 
 **Astro Pages**:
+
 - [ ] `src/pages/index.astro` - modyfikacja (server-side check + LandingView)
 - [ ] `src/pages/login.astro` - nowa strona logowania
 - [ ] `src/pages/signup.astro` - nowa strona rejestracji
@@ -2780,14 +2968,17 @@ describe('loginSchema', () => {
 - [ ] `src/pages/dashboard.astro` - modyfikacja (server-side auth guard)
 
 **Utilities**:
+
 - [ ] `src/lib/validators/auth.validator.ts` - schematy Zod
 - [ ] `src/lib/utils/session.utils.ts` - zarządzanie sesją w localStorage
 - [ ] `src/lib/utils/api-client.utils.ts` - wrapper fetch z auto token injection
 
 **Types**:
+
 - [ ] `src/types.ts` - dodanie UserDTO, AuthSessionDTO, LoginResponseDTO, SignupResponseDTO
 
 **Configuration**:
+
 - [ ] Supabase Auth settings (disable email confirmation, configure password reset redirect URLs)
 - [ ] Environment variables (.env)
 - [ ] Vitest coverage threshold (95%)
@@ -2795,18 +2986,21 @@ describe('loginSchema', () => {
 ### 7.2. Integracja z istniejącym systemem
 
 **Bez zmian (backwards compatible)**:
+
 - ✅ Wszystkie istniejące API endpoints: `/api/entries`, `/api/tags`, `/api/focus-scores`
 - ✅ Wszystkie istniejące komponenty React: EntryForm, EntriesList, FocusScoreWidget, etc.
 - ✅ Supabase client i database schema (tylko wykorzystanie auth.users)
 - ✅ RLS policies (automatycznie działają z auth.uid())
 
 **Z modyfikacjami (rozszerzenia)**:
+
 - 🔧 `DashboardView` - dodanie prop `initialUser` (opcjonalnie)
 - 🔧 `dashboard.astro` - dodanie server-side auth guard
 - 🔧 `index.astro` - zmiana z Welcome.astro na LandingView
 - 🔧 `middleware/index.ts` - dodanie route protection logic
 
 **Nowe funkcjonalności**:
+
 - ✨ Pełny flow autentykacji (signup, login, logout)
 - ✨ Odzyskiwanie hasła (forgot password, reset password)
 - ✨ Session management (localStorage/sessionStorage)
@@ -2816,18 +3010,21 @@ describe('loginSchema', () => {
 ### 7.3. Zgodność z wymaganiami PRD
 
 **US-003: Nowy użytkownik**:
+
 - ✅ Register for an account using email and password
 - ✅ Receive clear validation feedback during registration
 - ✅ Log in to access personal productivity dashboard
 - ✅ Recover password if forgotten
 
 **US-004: Uwierzytelniony użytkownik**:
+
 - ✅ Access all application features after logging in
 - ✅ Stay logged in across browser sessions (remember me)
 - ✅ Log out securely when done
 - ✅ Have confidence that data is private and secure (RLS)
 
 **Authentication & Access Control (PRD)**:
+
 - ✅ All application features require user authentication
 - ✅ Landing page (/) is public with login/signup options
 - ✅ Dashboard (/dashboard) requires active authentication session
@@ -2840,6 +3037,7 @@ describe('loginSchema', () => {
 - ✅ Password recovery functionality available
 
 **Success Metrics (PRD)**:
+
 - ✅ Zero security vulnerabilities in authentication flow
 - ✅ All user data protected by RLS with zero cross-user data access
 - ✅ 95%+ test coverage for business logic (validators, services, utils)
@@ -2850,9 +3048,11 @@ describe('loginSchema', () => {
 ## 8. KLUCZOWE DECYZJE ARCHITEKTONICZNE
 
 ### 8.1. Session Management Strategy
+
 **Decyzja**: **Użycie localStorage/sessionStorage z tokenem JWT w Authorization header**
 
 **Uzasadnienie**:
+
 - Prostsze w implementacji (brak potrzeby dodatkowych pakietów)
 - Zgodne z istniejącą architekturą API (wszystkie endpointy używają Authorization header)
 - Elastyczność (remember me przez localStorage vs sessionStorage)
@@ -2860,41 +3060,51 @@ describe('loginSchema', () => {
 - Middleware już implementuje weryfikację tokenu z header
 
 **Odrzucona alternatywa**: httpOnly cookies z `@supabase/ssr`
+
 - Bardziej bezpieczne, ale dodaje complexity
 - Wymaga dodatkowej konfiguracji i pakietów
 - PRD nie wymaga tego poziomu security dla MVP
 
 ### 8.2. Client-side vs Server-side Auth Guards
+
 **Decyzja**: Middleware sprawdza auth server-side dla wszystkich stron  
 **Uzasadnienie**:
+
 - Lepsze security (nie można obejść przez manipulację JS)
 - SEO-friendly (boty widzą poprawne redirecty)
 - Spójny flow (jednolite przekierowania)
 
 ### 8.3. Email Confirmation
+
 **Decyzja**: **DISABLED** (zgodnie z PRD)
 
 **Uzasadnienie**:
+
 - PRD nie wymaga email confirmation
 - Upraszcza onboarding flow (użytkownik od razu może korzystać z aplikacji)
 - Eliminuje potrzebę callback page i dodatkowej logiki
 - Dla MVP wystarczy password recovery jako weryfikacja email
 
 **Odrzucona alternatywa**: Włączyć email confirmation
+
 - PRD nie wymaga tego feature
 - Dodaje complexity bez wyraźnych korzyści dla tego use case
 
 ### 8.4. Token Refresh Strategy
+
 **Decyzja**: Supabase automatyczny refresh token rotation  
 **Implementacja**: Frontend odświeża token przy błędzie 401 lub proaktywnie przed wygaśnięciem  
 **Uzasadnienie**:
+
 - Supabase automatycznie obsługuje rotation
 - Bezpieczniejsze (jeden refresh token używany tylko raz)
 - Zmniejsza ryzyko token theft
 
 ### 8.5. Error Handling Philosophy
+
 **Decyzja**: Generic error messages dla auth failures, szczegółowe dla validation  
 **Uzasadnienie**:
+
 - Security: nie ujawniaj czy email istnieje
 - UX: pomocne komunikaty dla błędów walidacji
 - Balance między security a usability
@@ -2904,7 +3114,9 @@ describe('loginSchema', () => {
 ## 9. RYZYKA I MITIGACJE
 
 ### 9.1. Ryzyko: XSS Attack przez localStorage
+
 **Mitigacja**:
+
 - React automatycznie escapuje wszystkie dane (zapobiega XSS)
 - Nie używać `dangerouslySetInnerHTML`
 - Short-lived tokens (1h) minimalizują okno ataku
@@ -2913,26 +3125,34 @@ describe('loginSchema', () => {
 - Wyważony tradeoff między security a complexity dla MVP
 
 ### 9.2. Ryzyko: Session Hijacking
+
 **Mitigacja**:
+
 - Short-lived access tokens (1 hour)
 - Refresh token rotation
 - HTTPS only (production)
 
 ### 9.3. Ryzyko: Brute Force Attacks
+
 **Mitigacja**:
+
 - Supabase rate limiting (automatic)
 - Generic error messages (don't reveal if email exists)
 - Account lockout (Supabase automatic)
 
 ### 9.4. Ryzyko: Email Delivery Failures (Password Reset)
+
 **Mitigacja**:
+
 - Testowanie password reset email delivery w staging
 - Konfiguracja custom SMTP (opcjonalnie)
 - Komunikaty użytkownikowi o sprawdzeniu spamu/folderów
 - Generic success message (nie ujawnia czy email istnieje)
 
 ### 9.5. Ryzyko: Token Expiration During Work
+
 **Mitigacja**:
+
 - Automatyczny refresh tokenu przed wygaśnięciem
 - Graceful handling 401 errors
 - Przekierowanie z możliwością powrotu (redirect parameter)
@@ -2954,15 +3174,17 @@ Po zatwierdzeniu niniejszej specyfikacji, proces implementacji powinien przebieg
 
 **Koniec specyfikacji**
 
-*Data stworzenia: 2026-01-25*  
-*Ostatnia aktualizacja: 2026-01-25*  
-*Wersja: 2.0*  
-*Status: Zaktualizowano zgodnie z PRD - usunięto sprzeczności*
+_Data stworzenia: 2026-01-25_  
+_Ostatnia aktualizacja: 2026-01-25_  
+_Wersja: 2.0_  
+_Status: Zaktualizowano zgodnie z PRD - usunięto sprzeczności_
 
 ## CHANGELOG
 
 ### Wersja 2.0 (2026-01-25)
+
 **Główne zmiany - dostosowanie do PRD:**
+
 - ✅ Wybranie localStorage/sessionStorage jako głównej strategii session management (zamiast mieszanych informacji)
 - ✅ Usunięcie email confirmation feature (PRD tego nie wymaga)
 - ✅ Usunięcie `/auth/callback.astro` z planu implementacji
@@ -2972,4 +3194,3 @@ Po zatwierdzeniu niniejszej specyfikacji, proces implementacji powinien przebieg
 - ✅ Aktualizacja wszystkich komponentów i flow do uproszczonego signup (bez email confirmation)
 - ✅ Aktualizacja decyzji architektonicznych w sekcji 8
 - ✅ Aktualizacja mitigacji ryzyk zgodnie z wybraną strategią
-

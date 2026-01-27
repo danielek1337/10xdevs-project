@@ -19,11 +19,11 @@ jobs:
     name: Test & Build
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+
     env:
-      NODE_VERSION: '22.14.0'
+      NODE_VERSION: "22.14.0"
       CI: true
-    
+
     steps:
       # 1. Checkout kodu z repozytorium
       - name: Checkout code
@@ -33,8 +33,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
+          node-version-file: ".nvmrc"
+          cache: "npm"
 
       # 3. Instalacja zależności projektu
       - name: Install dependencies
@@ -156,4 +156,3 @@ jobs:
           echo "| Production Build | ${{ needs.test-and-build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Overall Result:** ${{ needs.test-and-build.result == 'success' && '✅ Success' || '❌ Failure' }}" >> $GITHUB_STEP_SUMMARY
-

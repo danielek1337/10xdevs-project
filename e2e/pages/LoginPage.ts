@@ -22,9 +22,9 @@ export class LoginPage extends BasePage {
     super(page);
 
     // Initialize locators
-    this.emailInput = page.locator('#email-input');
-    this.passwordInput = page.locator('#password-input');
-    this.rememberMeCheckbox = page.locator('#remember-me');
+    this.emailInput = page.locator("#email-input");
+    this.passwordInput = page.locator("#password-input");
+    this.rememberMeCheckbox = page.locator("#remember-me");
     this.submitButton = page.getByRole("button", { name: /sign in|log in|zaloguj/i });
     this.errorAlert = page.locator('[role="alert"]');
     this.forgotPasswordLink = page.getByRole("link", { name: /forgot password/i });
@@ -45,17 +45,17 @@ export class LoginPage extends BasePage {
   async login(email: string, password: string, rememberMe = false): Promise<void> {
     await this.emailInput.fill(email);
     await this.passwordInput.fill(password);
-    
+
     if (rememberMe) {
       await this.rememberMeCheckbox.check();
     }
-    
+
     await this.submitButton.click();
-    
+
     // Wait for navigation or error
     await Promise.race([
       this.page.waitForURL(/dashboard/, { timeout: 5000 }),
-      this.errorAlert.waitFor({ state: 'visible', timeout: 5000 })
+      this.errorAlert.waitFor({ state: "visible", timeout: 5000 }),
     ]).catch(() => {
       // Continue if neither happens
     });
@@ -72,7 +72,6 @@ export class LoginPage extends BasePage {
    * Get error message
    */
   async getErrorMessage(): Promise<string> {
-    return await this.errorAlert.textContent() || "";
+    return (await this.errorAlert.textContent()) || "";
   }
 }
-

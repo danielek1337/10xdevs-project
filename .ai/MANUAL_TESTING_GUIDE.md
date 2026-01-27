@@ -3,6 +3,7 @@
 ## Przygotowanie
 
 ### 1. Uruchom środowisko
+
 ```bash
 # Terminal 1: Supabase
 npx supabase start
@@ -12,6 +13,7 @@ npm run dev
 ```
 
 ### 2. Sprawdź czy API endpoints odpowiadają
+
 ```bash
 # Powinieneś widzieć 200 zamiast 404
 # [200] GET /api/entries
@@ -50,6 +52,7 @@ npm run dev
 2. Kliknij "Stwórz wpis"
 
 **Oczekiwany wynik:**
+
 - Toast notification: "Wpis został utworzony!"
 - Lista wpisów pokazuje nowy wpis
 - Focus Score Widget się aktualizuje (pokazuje score)
@@ -67,6 +70,7 @@ npm run dev
 2. Wypełnij formularz i kliknij "Stwórz wpis"
 
 **Oczekiwany wynik:**
+
 - Formularz jest zablokowany (przyciski disabled)
 - Widoczny pomarańczowy alert z countdown timerem
 - Alert pokazuje czas ostatniego wpisu i countdown
@@ -86,6 +90,7 @@ npm run dev
 
 **Oczekiwany wynik:**
 Każda karta pokazuje:
+
 - Badge z nastrojem (kolorowy, z emoji)
 - Opis zadania (truncated po 100 znakach jeśli długi)
 - Timestamp względny ("5m temu", "2h temu", "Wczoraj")
@@ -112,6 +117,7 @@ Każda karta pokazuje:
 7. Kliknij "Zapisz zmiany"
 
 **Oczekiwany wynik:**
+
 - Modal się otwiera z prawidłowymi danymi
 - Zmiany są zapisywane
 - Toast notification: "Wpis został zaktualizowany."
@@ -135,6 +141,7 @@ Każda karta pokazuje:
 5. Kliknij "Usuń"
 
 **Oczekiwany wynik:**
+
 - Dialog potwierdzenia pokazuje ostrzeżenie
 - Toast notification: "Wpis został usunięty."
 - Wpis znika z listy
@@ -142,8 +149,10 @@ Każda karta pokazuje:
 - Jeśli był to ostatni wpis, pokazuje się empty state
 
 **Opcjonalnie: Test anulowania**
+
 1. Kliknij "..." → "Usuń"
 2. Kliknij "Anuluj"
+
 - Dialog się zamyka
 - Wpis pozostaje na liście
 
@@ -161,6 +170,7 @@ Każda karta pokazuje:
 4. Sprawdź listę
 
 **Oczekiwany wynik:**
+
 - Lista pokazuje tylko wpisy z nastrojem 4 lub 5
 - Inne wpisy są ukryte
 - Pagination się aktualizuje
@@ -180,6 +190,7 @@ Każda karta pokazuje:
 3. Sprawdź listę
 
 **Oczekiwany wynik:**
+
 - Lista pokazuje tylko wpisy z tagiem "frontend"
 - Badge z tagiem jest podświetlony jako aktywny
 - Przycisk "Wyczyść filtry" jest widoczny
@@ -197,6 +208,7 @@ Każda karta pokazuje:
 3. Poczekaj 500ms (debounce)
 
 **Oczekiwany wynik:**
+
 - Po 500ms lista się aktualizuje
 - Pokazują się tylko wpisy zawierające "dashboard" w zadaniu lub notatkach
 - Search box pokazuje wprowadzony tekst
@@ -216,10 +228,12 @@ Każda karta pokazuje:
 4. Wybierz "Rosnąco"
 
 **Oczekiwany wynik:**
+
 - Lista sortuje się według nastroju od najmniejszego (1) do największego (5)
 - Zmiana sortowania jest instant (bez przeładowania)
 
 **Inne kombinacje do przetestowania:**
+
 - Data utworzenia (desc) - domyślne
 - Data utworzenia (asc) - od najstarszych
 - Data aktualizacji (desc) - ostatnio edytowane na górze
@@ -241,6 +255,7 @@ Każda karta pokazuje:
 5. Kliknij "Poprzednia"
 
 **Oczekiwany wynik:**
+
 - Przyciski "Poprzednia" i "Następna" działają
 - Licznik strony się aktualizuje
 - Przyciski są disabled gdy na pierwszej/ostatniej stronie
@@ -261,6 +276,7 @@ Każda karta pokazuje:
 2. Kliknij "Wyczyść filtry"
 
 **Oczekiwany wynik:**
+
 - Wszystkie filtry się resetują
 - Lista pokazuje wszystkie wpisy
 - Search box jest pusty
@@ -284,11 +300,13 @@ Każda karta pokazuje:
 
 **Oczekiwany wynik:**
 **Sekcja "Dzisiaj":**
+
 - Focus Score (0-100)
 - Progress bar (kolorowy)
 - Emoji odpowiadający score (😴 < 30, 😐 30-60, 😊 60-80, 🔥 > 80)
 
 **Szczegóły:**
+
 - Nastrój: X/5
 - Składowe:
   - Nastrój: X/100 (mood_score)
@@ -298,6 +316,7 @@ Każda karta pokazuje:
 - Czas aktywności: Xh Ym
 
 **Wykres:**
+
 - Ostatnie 7 dni widoczne
 - Tooltip po hover pokazuje:
   - Datę
@@ -319,6 +338,7 @@ Każda karta pokazuje:
 4. Poczekaj 500ms (debounce)
 
 **Oczekiwany wynik:**
+
 - Lista sugestii pokazuje istniejące tagi zawierające "fro"
 - Można kliknąć na sugestię, aby dodać tag
 - Jeśli tag nie istnieje, pokazuje się "Nie znaleziono tagów"
@@ -339,6 +359,7 @@ Każda karta pokazuje:
 3. Sprawdź wszystkie komponenty
 
 **Oczekiwany wynik:**
+
 - Header sticky działa
 - Logo i UserMenu są widoczne
 - Focus Score Widget i Formularz układają się pionowo
@@ -359,6 +380,7 @@ Każda karta pokazuje:
 2. Odśwież stronę
 
 **Oczekiwany wynik:**
+
 - Kolory się zmieniają (dark bg, light text)
 - Wykresy używają ciemnych kolorów
 - Kontrast jest wystarczający (WCAG AA)
@@ -376,6 +398,7 @@ Każda karta pokazuje:
 2. Używaj tylko klawiatury (Tab, Enter, Escape, Arrows)
 
 **Oczekiwany wynik:**
+
 - Tab przechodzi przez wszystkie interaktywne elementy
 - Focus ring jest widoczny na każdym elemencie
 - Enter/Space aktywuje przyciski
@@ -395,6 +418,7 @@ Każda karta pokazuje:
 3. Kliknij "Wyloguj się"
 
 **Oczekiwany wynik:**
+
 - Menu pokazuje email użytkownika
 - Menu pokazuje ID użytkownika (pierwsze 8 znaków)
 - Toast notification: "Wylogowano pomyślnie."
@@ -413,23 +437,27 @@ Jeśli znajdziesz bug, użyj tego template:
 ### Bug: [Krótki opis]
 
 **Kroki do reprodukcji:**
-1. 
-2. 
-3. 
+
+1.
+2.
+3.
 
 **Oczekiwany wynik:**
-- 
+
+-
 
 **Rzeczywisty wynik:**
-- 
+
+-
 
 **Screenshots/Console errors:**
 [Wklej tutaj]
 
 **Środowisko:**
-- Browser: 
-- OS: 
-- Screen size: 
+
+- Browser:
+- OS:
+- Screen size:
 ```
 
 ---
@@ -437,17 +465,18 @@ Jeśli znajdziesz bug, użyj tego template:
 ## ✅ Test Summary
 
 **Przeszło:** [ ] / 18  
-**Nie przeszło:** [ ] / 18  
+**Nie przeszło:** [ ] / 18
 
 **Gotowe do produkcji:** [ ] Tak [ ] Nie
 
 **Dodatkowe uwagi:**
+
 ```
 [Wpisz tutaj]
 ```
 
 ---
 
-**Data testów:** _________  
-**Tester:** _________  
+**Data testów:** ****\_****  
+**Tester:** ****\_****  
 **Wersja:** v1.0.0

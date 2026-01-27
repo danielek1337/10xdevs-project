@@ -1,9 +1,9 @@
 ---
 /**
  * Login Page
- * 
+ *
  * Renders the login form for existing users.
- * 
+ *
  * Features:
  * - Client-side auth check in LoginView component
  * - Captures redirect parameter from URL for post-login navigation
@@ -18,4 +18,3 @@ const redirectTo = Astro.url.searchParams.get("redirect") || "/dashboard";
 <Layout title="Sign In - VibeCheck">
   <LoginView client:load redirectTo={redirectTo} />
 </Layout>
-

@@ -12,9 +12,11 @@ Czas implementacji: ~30 minut
 ## 🚀 Zaimplementowane Endpoints
 
 ### ✅ 1. GET /api/entries
+
 **Plik:** `/src/pages/api/entries/index.ts`  
 **Funkcja:** Lista wpisów z paginacją i filtrami  
 **Parametry:**
+
 - `page`: number (default: 1)
 - `limit`: number (default: 20, max: 100)
 - `sort`: "created_at" | "mood" | "updated_at"
@@ -30,9 +32,11 @@ Czas implementacji: ~30 minut
 ---
 
 ### ✅ 2. POST /api/entries
+
 **Plik:** `/src/pages/api/entries/index.ts`  
 **Funkcja:** Tworzenie nowego wpisu  
 **Body:**
+
 - `mood`: number (1-5, required)
 - `task`: string (min 3 chars, required)
 - `notes`: string (optional)
@@ -44,6 +48,7 @@ Czas implementacji: ~30 minut
 ---
 
 ### ✅ 3. GET /api/entries/:id
+
 **Plik:** `/src/pages/api/entries/[id].ts`  
 **Funkcja:** Pobranie pojedynczego wpisu  
 **Parametry:** `id` (UUID)  
@@ -52,10 +57,12 @@ Czas implementacji: ~30 minut
 ---
 
 ### ✅ 4. PATCH /api/entries/:id
+
 **Plik:** `/src/pages/api/entries/[id].ts`  
 **Funkcja:** Aktualizacja wpisu  
 **Parametry:** `id` (UUID)  
 **Body (wszystkie opcjonalne):**
+
 - `mood`: number (1-5)
 - `task`: string (min 3 chars)
 - `notes`: string
@@ -66,6 +73,7 @@ Czas implementacji: ~30 minut
 ---
 
 ### ✅ 5. DELETE /api/entries/:id
+
 **Plik:** `/src/pages/api/entries/[id].ts`  
 **Funkcja:** Soft delete wpisu  
 **Parametry:** `id` (UUID)  
@@ -74,9 +82,11 @@ Czas implementacji: ~30 minut
 ---
 
 ### ✅ 6. GET /api/tags
+
 **Plik:** `/src/pages/api/tags/index.ts`  
 **Funkcja:** Lista tagów z wyszukiwaniem  
 **Parametry:**
+
 - `search`: string (prefix match)
 - `limit`: number (default: 100, max: 500)
 
@@ -85,9 +95,11 @@ Czas implementacji: ~30 minut
 ---
 
 ### ✅ 7. GET /api/focus-scores
+
 **Plik:** `/src/pages/api/focus-scores/index.ts`  
 **Funkcja:** Dzienne metryki produktywności  
 **Parametry:**
+
 - `date_from`: ISO 8601 date (optional)
 - `date_to`: ISO 8601 date (optional)
 
@@ -96,6 +108,7 @@ Czas implementacji: ~30 minut
 ---
 
 ### ✅ 8. POST /api/auth/logout
+
 **Plik:** `/src/pages/api/auth/logout.ts`  
 **Funkcja:** Wylogowanie użytkownika  
 **Odpowiedź:** MessageResponseDTO
@@ -105,35 +118,43 @@ Czas implementacji: ~30 minut
 ## 🛠️ Rozszerzone Serwisy
 
 ### EntriesService
+
 **Plik:** `/src/lib/services/entries.service.ts`
 
 **Nowe metody:**
+
 - ✅ `getEntries(userId, params)` - Lista z paginacją i filtrami
 - ✅ `updateEntry(userId, entryId, data)` - Aktualizacja wpisu
 - ✅ `deleteEntry(userId, entryId)` - Soft delete
 
 **Istniejące metody:**
+
 - `createEntry(userId, data)`
 - `getEntryById(entryId)`
 
 ---
 
 ### TagsService
+
 **Plik:** `/src/lib/services/tags.service.ts`
 
 **Nowe metody:**
+
 - ✅ `getTags(params)` - Lista tagów z wyszukiwaniem
 
 **Istniejące metody:**
+
 - `resolveTagIds(tagNames)`
 - `getTagsByIds(tagIds)`
 
 ---
 
 ### FocusScoresService (NOWY)
+
 **Plik:** `/src/lib/services/focus-scores.service.ts`
 
 **Metody:**
+
 - ✅ `getFocusScores(userId, params)` - Lista dziennych score'ów
 - ✅ `getFocusScoreForDay(userId, day)` - Score dla konkretnego dnia
 
@@ -166,6 +187,7 @@ src/
 ## ✅ Testy API (Dev Server)
 
 ### Sprawdzenie w konsoli:
+
 ```bash
 # Terminal pokazuje teraz 200 zamiast 404:
 [200] GET /api/entries
@@ -214,12 +236,14 @@ curl -X POST http://localhost:3000/api/auth/logout
 ## 🎯 Funkcjonalność Kompletna
 
 ### Dashboard Frontend ✅
+
 - **25+ plików**
 - **18 komponentów React**
 - **4 custom hooks**
 - **3500+ linii kodu**
 
 ### Dashboard Backend ✅
+
 - **8 API endpoints**
 - **3 serwisy**
 - **CRUD operations**
@@ -232,15 +256,19 @@ curl -X POST http://localhost:3000/api/auth/logout
 ## 🚀 Następne Kroki
 
 ### 1. Testowanie Manualne
+
 Postępuj zgodnie z `.ai/MANUAL_TESTING_GUIDE.md`:
+
 - [ ] Przejdź przez wszystkie 18 scenariuszy testowych
 - [ ] Sprawdź każdą funkcję Dashboard
 - [ ] Zweryfikuj wszystkie API endpoints
 
 ### 2. Database View
+
 **WAŻNE:** Sprawdź czy view `v_daily_focus_scores_utc` istnieje w Supabase!
 
 Jeśli nie istnieje, utwórz go:
+
 ```sql
 -- TODO: Dodaj SQL do utworzenia view
 -- View powinien zawierać:
@@ -258,12 +286,14 @@ Jeśli nie istnieje, utwórz go:
 ```
 
 ### 3. Testy Jednostkowe (Vitest)
+
 - [ ] Testy EntriesService (getEntries, updateEntry, deleteEntry)
 - [ ] Testy TagsService (getTags)
 - [ ] Testy FocusScoresService (getFocusScores)
 - [ ] Testy API endpoints (mock Supabase)
 
 ### 4. Testy E2E (Playwright)
+
 - [ ] Full user flow (create → list → edit → delete)
 - [ ] Anti-spam mechanism
 - [ ] Filtering and sorting
@@ -273,13 +303,13 @@ Jeśli nie istnieje, utwórz go:
 
 ## 📊 Statystyki
 
-| Kategoria | Przed | Po | Status |
-|-----------|-------|-----|--------|
-| **API Endpoints** | 1/7 | 8/8 | ✅ 100% |
-| **Serwisy** | 2 | 3 | ✅ +1 |
-| **Metody Serwisów** | 4 | 10 | ✅ +6 |
-| **Pliki Backend** | 2 | 7 | ✅ +5 |
-| **Dashboard Funkcjonalność** | 14% | 100% | ✅ |
+| Kategoria                    | Przed | Po   | Status  |
+| ---------------------------- | ----- | ---- | ------- |
+| **API Endpoints**            | 1/7   | 8/8  | ✅ 100% |
+| **Serwisy**                  | 2     | 3    | ✅ +1   |
+| **Metody Serwisów**          | 4     | 10   | ✅ +6   |
+| **Pliki Backend**            | 2     | 7    | ✅ +5   |
+| **Dashboard Funkcjonalność** | 14%   | 100% | ✅      |
 
 ---
 
@@ -294,7 +324,7 @@ Jeśli nie istnieje, utwórz go:
 ✅ Filtering & Sorting (mood, tags, search, dates)  
 ✅ Pagination (20 wpisów/stronę)  
 ✅ Focus Score Calculations (via database view)  
-✅ Authentication & Authorization (RLS)  
+✅ Authentication & Authorization (RLS)
 
 **Możesz teraz otworzyć Dashboard i zacząć z niego korzystać!** 🚀
 
@@ -308,4 +338,3 @@ http://localhost:3000/dashboard
 **Autor:** AI Assistant (Claude Sonnet 4.5)  
 **Data:** 25 stycznia 2026, 15:04  
 **Commit:** "feat: implement all API endpoints for dashboard backend"
-

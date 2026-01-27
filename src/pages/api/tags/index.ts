@@ -22,7 +22,7 @@ export const prerender = false;
 export const GET: APIRoute = async ({ url, locals }) => {
   try {
     const { supabase, user } = locals;
-    
+
     // Note: Tags are global, not user-specific, but we still check auth
     if (!user) {
       return new Response(

@@ -102,11 +102,7 @@ export function PasswordStrengthIndicator({ password, className }: PasswordStren
         </div>
         <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
           <div
-            className={cn(
-              "h-full transition-all duration-300",
-              strengthColors[strength],
-              strengthWidths[strength]
-            )}
+            className={cn("h-full transition-all duration-300", strengthColors[strength], strengthWidths[strength])}
             role="progressbar"
             aria-valuenow={metRequirements}
             aria-valuemin={0}
@@ -141,4 +137,3 @@ export function PasswordStrengthIndicator({ password, className }: PasswordStren
     </div>
   );
 }
-

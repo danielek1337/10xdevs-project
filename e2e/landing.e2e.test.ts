@@ -1,6 +1,6 @@
 /**
  * E2E Tests for Landing Page
- * 
+ *
  * This demonstrates best practices for E2E testing with Playwright:
  * - Using Page Object Model
  * - Testing user workflows
@@ -8,10 +8,10 @@
  * - Proper test isolation
  */
 
-import { test, expect } from '@playwright/test';
-import { LandingPage } from './pages/LandingPage';
+import { test, expect } from "@playwright/test";
+import { LandingPage } from "./pages/LandingPage";
 
-test.describe('Landing Page', () => {
+test.describe("Landing Page", () => {
   let landingPage: LandingPage;
 
   test.beforeEach(async ({ page }) => {
@@ -20,23 +20,23 @@ test.describe('Landing Page', () => {
     await landingPage.navigate();
   });
 
-  test('should display landing page correctly', async () => {
+  test("should display landing page correctly", async () => {
     // Assert
     await expect(landingPage.heading).toBeVisible();
     expect(await landingPage.isDisplayed()).toBe(true);
   });
 
-  test('should have login button', async () => {
+  test("should have login button", async () => {
     // Assert
     await expect(landingPage.loginButton).toBeVisible();
   });
 
-  test('should have signup button', async () => {
+  test("should have signup button", async () => {
     // Assert
     await expect(landingPage.signupButton).toBeVisible();
   });
 
-  test('should have correct page title', async () => {
+  test("should have correct page title", async () => {
     // Act
     const title = await landingPage.getTitle();
 
@@ -44,17 +44,17 @@ test.describe('Landing Page', () => {
     expect(title).toBeTruthy();
   });
 
-  test('should be accessible from root URL', async () => {
+  test("should be accessible from root URL", async () => {
     // Act
     const url = landingPage.getCurrentUrl();
 
     // Assert
-    expect(url).toContain('/');
+    expect(url).toContain("/");
   });
 });
 
-test.describe('Landing Page Navigation', () => {
-  test('should navigate when login button is clicked', async ({ page }) => {
+test.describe("Landing Page Navigation", () => {
+  test("should navigate when login button is clicked", async ({ page }) => {
     // Arrange
     const landingPage = new LandingPage(page);
     await landingPage.navigate();
@@ -69,4 +69,3 @@ test.describe('Landing Page Navigation', () => {
     });
   });
 });
-

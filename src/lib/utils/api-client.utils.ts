@@ -16,10 +16,7 @@ export interface ApiClientOptions extends RequestInit {
 /**
  * API Client wrapper with automatic token injection and 401 handling
  */
-export async function apiClient(
-  url: string,
-  options: ApiClientOptions = {}
-): Promise<Response> {
+export async function apiClient(url: string, options: ApiClientOptions = {}): Promise<Response> {
   const { skipAuth = false, ...fetchOptions } = options;
 
   // Prepare headers
@@ -58,4 +55,3 @@ export async function apiClient(
 
   return response;
 }
-

@@ -34,14 +34,12 @@ export default function LandingView() {
           </div>
 
           {/* Headline */}
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-            Track Your Productivity Flow
-          </h2>
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">Track Your Productivity Flow</h2>
 
           {/* Subheadline */}
           <p className="text-lg md:text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Monitor your mood, tasks, and focus levels throughout the day. Stay in flow, maximize
-            productivity, and understand your work patterns.
+            Monitor your mood, tasks, and focus levels throughout the day. Stay in flow, maximize productivity, and
+            understand your work patterns.
           </p>
 
           {/* CTA Buttons */}
@@ -119,4 +117,3 @@ export default function LandingView() {
     </div>
   );
 }
-

@@ -28,9 +28,11 @@
 ### 2.1 Authentication Endpoints
 
 #### POST /api/auth/signup
+
 Creates a new user account.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -39,6 +41,7 @@ Creates a new user account.
 ```
 
 **Success Response (201 Created):**
+
 ```json
 {
   "user": {
@@ -54,6 +57,7 @@ Creates a new user account.
 ```
 
 **Error Responses:**
+
 - `400 Bad Request` - Invalid email format or weak password
   ```json
   {
@@ -72,9 +76,11 @@ Creates a new user account.
 ---
 
 #### POST /api/auth/login
+
 Authenticates existing user.
 
 **Request Body:**
+
 ```json
 {
   "email": "user@example.com",
@@ -83,6 +89,7 @@ Authenticates existing user.
 ```
 
 **Success Response (200 OK):**
+
 ```json
 {
   "user": {
@@ -98,6 +105,7 @@ Authenticates existing user.
 ```
 
 **Error Responses:**
+
 - `401 Unauthorized` - Invalid credentials
   ```json
   {
@@ -109,12 +117,15 @@ Authenticates existing user.
 ---
 
 #### POST /api/auth/logout
+
 Invalidates current session.
 
 **Headers:**
+
 - `Authorization: Bearer {access_token}`
 
 **Success Response (200 OK):**
+
 ```json
 {
   "message": "Logged out successfully"
@@ -122,14 +133,17 @@ Invalidates current session.
 ```
 
 **Error Responses:**
+
 - `401 Unauthorized` - Invalid or expired token
 
 ---
 
 #### POST /api/auth/refresh
+
 Refreshes access token using refresh token.
 
 **Request Body:**
+
 ```json
 {
   "refresh_token": "refresh_token"
@@ -137,6 +151,7 @@ Refreshes access token using refresh token.
 ```
 
 **Success Response (200 OK):**
+
 ```json
 {
   "access_token": "new_jwt_token",
@@ -146,6 +161,7 @@ Refreshes access token using refresh token.
 ```
 
 **Error Responses:**
+
 - `401 Unauthorized` - Invalid or expired refresh token
 
 ---
@@ -155,9 +171,11 @@ Refreshes access token using refresh token.
 All entries endpoints require authentication via `Authorization: Bearer {access_token}` header.
 
 #### GET /api/entries
+
 Retrieves paginated list of user's entries with filtering and sorting.
 
 **Query Parameters:**
+
 - `page` (number, default: 1) - Page number for pagination
 - `limit` (number, default: 20, max: 100) - Items per page
 - `sort` (string, default: "created_at") - Sort field: `created_at`, `mood`, `updated_at`
@@ -169,6 +187,7 @@ Retrieves paginated list of user's entries with filtering and sorting.
 - `search` (string, optional) - Search in task and notes fields
 
 **Success Response (200 OK):**
+
 ```json
 {
   "data": [
@@ -202,15 +221,18 @@ Retrieves paginated list of user's entries with filtering and sorting.
 ```
 
 **Error Responses:**
+
 - `401 Unauthorized` - Missing or invalid token
 - `400 Bad Request` - Invalid query parameters
 
 ---
 
 #### GET /api/entries/:id
+
 Retrieves a specific entry by ID.
 
 **Success Response (200 OK):**
+
 ```json
 {
   "id": "uuid",
@@ -230,6 +252,7 @@ Retrieves a specific entry by ID.
 ```
 
 **Error Responses:**
+
 - `401 Unauthorized` - Missing or invalid token
 - `404 Not Found` - Entry doesn't exist or doesn't belong to user
   ```json
@@ -242,9 +265,11 @@ Retrieves a specific entry by ID.
 ---
 
 #### POST /api/entries
+
 Creates a new productivity entry.
 
 **Request Body:**
+
 ```json
 {
   "mood": 4,
@@ -255,12 +280,14 @@ Creates a new productivity entry.
 ```
 
 **Field Validations:**
+
 - `mood` (required, number) - Must be between 1 and 5
 - `task` (required, string) - Minimum 3 characters after trimming
 - `notes` (optional, string) - No length limit
 - `tags` (optional, array of strings) - Each tag: lowercase, alphanumeric, 1-20 chars
 
 **Success Response (201 Created):**
+
 ```json
 {
   "id": "uuid",
@@ -284,6 +311,7 @@ Creates a new productivity entry.
 ```
 
 **Error Responses:**
+
 - `401 Unauthorized` - Missing or invalid token
 - `400 Bad Request` - Validation errors
   ```json
@@ -308,9 +336,11 @@ Creates a new productivity entry.
 ---
 
 #### PATCH /api/entries/:id
+
 Updates an existing entry (partial update).
 
 **Request Body:**
+
 ```json
 {
   "mood": 5,
@@ -321,11 +351,13 @@ Updates an existing entry (partial update).
 ```
 
 **Field Validations:**
+
 - All fields are optional (partial update)
 - Same validation rules as POST apply to provided fields
 - `created_at` cannot be modified (preserved)
 
 **Success Response (200 OK):**
+
 ```json
 {
   "id": "uuid",
@@ -353,6 +385,7 @@ Updates an existing entry (partial update).
 ```
 
 **Error Responses:**
+
 - `401 Unauthorized` - Missing or invalid token
 - `404 Not Found` - Entry doesn't exist or doesn't belong to user
 - `400 Bad Request` - Validation errors
@@ -360,9 +393,11 @@ Updates an existing entry (partial update).
 ---
 
 #### DELETE /api/entries/:id
+
 Soft deletes an entry (sets `deleted_at` timestamp).
 
 **Success Response (200 OK):**
+
 ```json
 {
   "message": "Entry deleted successfully",
@@ -371,6 +406,7 @@ Soft deletes an entry (sets `deleted_at` timestamp).
 ```
 
 **Error Responses:**
+
 - `401 Unauthorized` - Missing or invalid token
 - `404 Not Found` - Entry doesn't exist or doesn't belong to user
 - `409 Conflict` - Entry already deleted
@@ -380,13 +416,16 @@ Soft deletes an entry (sets `deleted_at` timestamp).
 ### 2.3 Tags Endpoints
 
 #### GET /api/tags
+
 Retrieves list of all available tags (global catalog).
 
 **Query Parameters:**
+
 - `search` (string, optional) - Filter tags by name (prefix match)
 - `limit` (number, default: 100, max: 500) - Maximum number of tags to return
 
 **Success Response (200 OK):**
+
 ```json
 {
   "data": [
@@ -411,14 +450,17 @@ Retrieves list of all available tags (global catalog).
 ```
 
 **Error Responses:**
+
 - `401 Unauthorized` - Missing or invalid token
 
 ---
 
 #### POST /api/tags
+
 Creates a new tag (available to all authenticated users).
 
 **Request Body:**
+
 ```json
 {
   "name": "devops"
@@ -426,9 +468,11 @@ Creates a new tag (available to all authenticated users).
 ```
 
 **Field Validations:**
+
 - `name` (required, string) - Must be lowercase, alphanumeric, 1-20 characters
 
 **Success Response (201 Created):**
+
 ```json
 {
   "id": "uuid",
@@ -438,6 +482,7 @@ Creates a new tag (available to all authenticated users).
 ```
 
 **Error Responses:**
+
 - `401 Unauthorized` - Missing or invalid token
 - `400 Bad Request` - Validation error
   ```json
@@ -459,14 +504,17 @@ Creates a new tag (available to all authenticated users).
 ### 2.4 Focus Score Endpoints
 
 #### GET /api/focus-scores
+
 Retrieves daily focus scores for the authenticated user.
 
 **Query Parameters:**
+
 - `date_from` (ISO 8601 date, optional) - Start date for range (default: 30 days ago)
 - `date_to` (ISO 8601 date, optional) - End date for range (default: today)
 - `timezone` (string, optional) - Timezone for date grouping (default: UTC)
 
 **Success Response (200 OK):**
+
 ```json
 {
   "data": [
@@ -503,25 +551,30 @@ Retrieves daily focus scores for the authenticated user.
 ```
 
 **Calculation Details:**
+
 - `mood_score`: `((avg_mood - 1) / 4) * 100` (normalizes 1-5 scale to 0-100)
 - `consistency_score`: `min(1, entry_count / 8) * 100` (saturates at 8 entries)
 - `distribution_score`: `min(1, span_minutes / 480) * 100` (saturates at 8 hours)
 - `focus_score`: `(mood_score * 0.55) + (consistency_score * 0.25) + (distribution_score * 0.20)`
 
 **Error Responses:**
+
 - `401 Unauthorized` - Missing or invalid token
 - `400 Bad Request` - Invalid date range
 
 ---
 
 #### GET /api/focus-scores/summary
+
 Retrieves aggregated focus score statistics.
 
 **Query Parameters:**
+
 - `period` (string, required) - Aggregation period: `week`, `month`, `quarter`, `year`
 - `date` (ISO 8601 date, optional) - Reference date for period (default: today)
 
 **Success Response (200 OK):**
+
 ```json
 {
   "period": "week",
@@ -546,6 +599,7 @@ Retrieves aggregated focus score statistics.
 ```
 
 **Error Responses:**
+
 - `401 Unauthorized` - Missing or invalid token
 - `400 Bad Request` - Invalid period or date
 
@@ -554,12 +608,15 @@ Retrieves aggregated focus score statistics.
 ### 2.5 Statistics Endpoints
 
 #### GET /api/stats/overview
+
 Retrieves high-level statistics about user's productivity.
 
 **Query Parameters:**
+
 - `period` (string, optional, default: "month") - Period for stats: `day`, `week`, `month`, `year`
 
 **Success Response (200 OK):**
+
 ```json
 {
   "period": "month",
@@ -591,6 +648,7 @@ Retrieves high-level statistics about user's productivity.
 ```
 
 **Error Responses:**
+
 - `401 Unauthorized` - Missing or invalid token
 
 ---
@@ -600,6 +658,7 @@ Retrieves high-level statistics about user's productivity.
 ### Authentication Mechanism
 
 **Supabase Auth (JWT-based)**
+
 - Email/password authentication only (MVP scope)
 - JWT tokens issued via Supabase Auth API
 - Access tokens expire after 1 hour (configurable)
@@ -608,11 +667,13 @@ Retrieves high-level statistics about user's productivity.
 ### Token Management
 
 **Access Tokens:**
+
 - Passed in `Authorization` header: `Bearer {access_token}`
 - Validated on every API request via Astro middleware
 - Contains user ID (`sub` claim) used for RLS enforcement
 
 **Refresh Tokens:**
+
 - Stored securely on client (httpOnly cookie or secure storage)
 - Used only for `/api/auth/refresh` endpoint
 - Rotated on each refresh for enhanced security
@@ -624,26 +685,35 @@ All API endpoints (except auth signup/login) protected by authentication middlew
 ```typescript
 // src/middleware/index.ts
 export async function onRequest(context, next) {
-  const token = context.request.headers.get('Authorization')?.replace('Bearer ', '');
-  
+  const token = context.request.headers.get("Authorization")?.replace("Bearer ", "");
+
   if (!token && !isPublicRoute(context.url.pathname)) {
-    return new Response(JSON.stringify({
-      error: 'Authentication required',
-      code: 'UNAUTHORIZED'
-    }), { status: 401 });
+    return new Response(
+      JSON.stringify({
+        error: "Authentication required",
+        code: "UNAUTHORIZED",
+      }),
+      { status: 401 }
+    );
   }
-  
+
   if (token) {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
     if (error || !user) {
-      return new Response(JSON.stringify({
-        error: 'Invalid or expired token',
-        code: 'INVALID_TOKEN'
-      }), { status: 401 });
+      return new Response(
+        JSON.stringify({
+          error: "Invalid or expired token",
+          code: "INVALID_TOKEN",
+        }),
+        { status: 401 }
+      );
     }
     context.locals.user = user;
   }
-  
+
   return next();
 }
 ```
@@ -653,15 +723,18 @@ export async function onRequest(context, next) {
 Database-level authorization enforced via Supabase RLS policies:
 
 **Entries Table:**
+
 - Users can only SELECT/INSERT/UPDATE/DELETE their own entries
 - Policy: `user_id = auth.uid()`
 - Soft-deleted entries (`deleted_at IS NOT NULL`) excluded from queries
 
 **Entry Tags Table:**
+
 - Users can only manage tags for their own entries
 - Policy: `EXISTS (SELECT 1 FROM entries WHERE id = entry_id AND user_id = auth.uid())`
 
 **Tags Table:**
+
 - All authenticated users can SELECT tags (global catalog)
 - All authenticated users can INSERT new tags (with validation)
 - UPDATE/DELETE operations disabled (tags are immutable once created)
@@ -694,6 +767,7 @@ Database-level authorization enforced via Supabase RLS policies:
 #### Entries
 
 **Field Validations:**
+
 - `mood` (required on create):
   - Type: integer
   - Range: 1-5 inclusive
@@ -737,6 +811,7 @@ Database-level authorization enforced via Supabase RLS policies:
 #### Tags
 
 **Field Validations:**
+
 - `name` (required):
   - Type: string
   - Length: 1-20 characters
@@ -779,25 +854,31 @@ Database-level authorization enforced via Supabase RLS policies:
    - `span_minutes`: EXTRACT(EPOCH FROM (last_entry_at - first_entry_at)) / 60
 
 3. **Score components:**
-   
+
    a. **Mood Score (55% weight):**
+
    ```
    mood_score = ((avg_mood - 1) / 4) * 100
    ```
+
    - Normalizes 1-5 scale to 0-100 range
    - Example: avg_mood = 4 → mood_score = 75
 
    b. **Consistency Score (25% weight):**
+
    ```
    consistency_score = MIN(1, entry_count / 8) * 100
    ```
+
    - Saturates at 8 entries per day (100%)
    - Example: 4 entries → 50%, 8+ entries → 100%
 
    c. **Distribution Score (20% weight):**
+
    ```
    distribution_score = MIN(1, span_minutes / 480) * 100
    ```
+
    - Saturates at 8 hours (480 minutes) span
    - Rewards spreading work throughout the day
    - Example: 4-hour span → 50%, 8+ hour span → 100%
@@ -806,29 +887,34 @@ Database-level authorization enforced via Supabase RLS policies:
    ```
    focus_score = (mood_score * 0.55) + (consistency_score * 0.25) + (distribution_score * 0.20)
    ```
+
    - Range: 0-100
    - Rounded to 1 decimal place
 
 **Example Calculation:**
+
 - 6 entries, avg mood 4.2, span 7 hours (420 min)
-- mood_score = ((4.2 - 1) / 4) * 100 = 80
-- consistency_score = (6 / 8) * 100 = 75
-- distribution_score = (420 / 480) * 100 = 87.5
-- focus_score = (80 * 0.55) + (75 * 0.25) + (87.5 * 0.20) = 80.25
+- mood_score = ((4.2 - 1) / 4) \* 100 = 80
+- consistency_score = (6 / 8) \* 100 = 75
+- distribution_score = (420 / 480) \* 100 = 87.5
+- focus_score = (80 _ 0.55) + (75 _ 0.25) + (87.5 \* 0.20) = 80.25
 
 #### Data Formatting Utilities
 
 **Timestamp Display:**
+
 - ISO 8601 format for API responses: `2026-01-18T10:30:00Z`
 - Client-side formatting based on user locale
 - Relative time for recent entries: "2 hours ago", "yesterday"
 
 **Time Statistics:**
+
 - Work span formatted as: "8h 30m"
 - Time gaps between entries: "1h 15m since last entry"
 - Total work time calculation: sum of spans per day
 
 **Summaries:**
+
 - Daily: Focus score + entry count + avg mood
 - Weekly: Trend analysis (improving/declining), best/worst days
 - Monthly: Total entries, productivity streaks, tag usage distribution
@@ -853,6 +939,7 @@ Database-level authorization enforced via Supabase RLS policies:
    - All timestamps in UTC for consistency
 
 **Error Response Example:**
+
 ```json
 {
   "error": "You can only create one entry every 5 minutes",
@@ -868,6 +955,7 @@ Database-level authorization enforced via Supabase RLS policies:
 ### 4.3 Error Handling Standards
 
 **Error Response Format:**
+
 ```json
 {
   "error": "Human-readable error message",
@@ -879,6 +967,7 @@ Database-level authorization enforced via Supabase RLS policies:
 ```
 
 **Standard Error Codes:**
+
 - `UNAUTHORIZED` - Missing or invalid authentication
 - `FORBIDDEN` - Authenticated but not authorized
 - `VALIDATION_ERROR` - Input validation failed
@@ -888,6 +977,7 @@ Database-level authorization enforced via Supabase RLS policies:
 - `INTERNAL_ERROR` - Unexpected server error
 
 **HTTP Status Code Mapping:**
+
 - 200 OK - Successful GET/PATCH
 - 201 Created - Successful POST
 - 400 Bad Request - Validation errors, malformed input
@@ -903,24 +993,28 @@ Database-level authorization enforced via Supabase RLS policies:
 ## 5. Performance Considerations
 
 ### Pagination Strategy
+
 - Cursor-based pagination for large datasets (more efficient than offset)
 - Default page size: 20 items
 - Maximum page size: 100 items
 - Include total count only when explicitly requested (expensive on large tables)
 
 ### Database Query Optimization
+
 - Use indexes defined in schema: `entries_user_created_at_id_desc_idx`
 - Partial index for active entries: `WHERE deleted_at IS NULL`
 - Avoid N+1 queries: eager load tags with entries using JOINs
 - Use database views for complex aggregations (Daily Focus Scores)
 
 ### Caching Strategy (Future Enhancement)
+
 - Cache focus scores for previous days (immutable once day ends)
 - Cache tag catalog (rarely changes)
 - ETags for conditional requests
 - Cache invalidation on entry create/update/delete
 
 ### Rate Limiting
+
 - Protects against abuse and ensures fair usage
 - Implemented at API Gateway level (Vercel Edge Middleware)
 - Different limits per endpoint type (stricter for write operations)
@@ -932,6 +1026,7 @@ Database-level authorization enforced via Supabase RLS policies:
 **Current Implementation:** No versioning for MVP (v1 implicit)
 
 **Future Versioning Approach:**
+
 - URL-based versioning: `/api/v2/entries`
 - Maintain v1 endpoints for backward compatibility
 - Deprecation notices in response headers: `X-API-Deprecation-Date`
@@ -942,6 +1037,7 @@ Database-level authorization enforced via Supabase RLS policies:
 ## 7. Testing Requirements
 
 ### Unit Tests (Vitest)
+
 - Focus score calculation with various input combinations
 - Validation functions for all input types
 - Anti-spam logic edge cases
@@ -949,12 +1045,14 @@ Database-level authorization enforced via Supabase RLS policies:
 - Error response formatting
 
 ### Integration Tests
+
 - Database constraints (anti-spam, validations)
 - RLS policies (user isolation)
 - Tag auto-creation on entry create
 - Soft delete behavior
 
 ### E2E Tests (Playwright)
+
 - Complete auth flow (signup → login → logout)
 - Entry CRUD operations via API
 - Filter and pagination
@@ -969,24 +1067,28 @@ Database-level authorization enforced via Supabase RLS policies:
 ### Technology-Specific Considerations
 
 **Astro 5:**
+
 - API routes in `src/pages/api/` directory
 - Each endpoint is a separate file: `src/pages/api/entries/index.ts` (GET, POST)
 - Dynamic routes: `src/pages/api/entries/[id].ts` (GET, PATCH, DELETE)
 - Middleware in `src/middleware/index.ts` for authentication
 
 **Supabase Client:**
+
 - Initialize in `src/db/supabase.client.ts`
 - Use typed client with generated types from `database.types.ts`
 - Always pass user JWT token for RLS enforcement
 - Use Supabase client server-side only (never expose service key)
 
 **TypeScript Types:**
+
 - Define DTOs in `src/types.ts`
 - Separate types for request/response/entity
 - Use discriminated unions for error types
 - Generate database types from Supabase schema
 
 **Error Handling:**
+
 - Centralized error handler utility
 - Transform database errors to API errors
 - Log errors server-side (structured logging)
@@ -995,12 +1097,14 @@ Database-level authorization enforced via Supabase RLS policies:
 ### Deployment Considerations
 
 **Environment Variables:**
+
 - `SUPABASE_URL` - Supabase project URL
 - `SUPABASE_ANON_KEY` - Public anon key (client-side)
 - `SUPABASE_SERVICE_ROLE_KEY` - Service role key (server-side only, never expose)
 - `API_RATE_LIMIT_ENABLED` - Feature flag for rate limiting
 
 **Vercel Deployment:**
+
 - API routes deployed as serverless functions
 - Edge middleware for authentication check
 - Environment variables configured in Vercel dashboard
@@ -1020,4 +1124,3 @@ Database-level authorization enforced via Supabase RLS policies:
 - Hard delete endpoint (permanent removal)
 - Entry recovery endpoint (undo soft delete)
 - Tag management (rename, merge, delete)
-

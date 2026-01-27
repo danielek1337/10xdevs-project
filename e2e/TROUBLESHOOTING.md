@@ -3,6 +3,7 @@
 ## Current Issue: "Invalid email or password" after user creation
 
 ### What We Know ✅
+
 1. ✅ Supabase is running (`supabase status` works)
 2. ✅ Dev server is running on port 4321
 3. ✅ Global setup creates test user successfully
@@ -85,14 +86,14 @@ Update `e2e/setup/global-setup.ts`:
 
 ```typescript
 // Instead of anon key, use service role key
-const supabaseUrl = 'http://127.0.0.1:54321';
-const supabaseServiceKey = 'sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz';  // Service role!
+const supabaseUrl = "http://127.0.0.1:54321";
+const supabaseServiceKey = "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz"; // Service role!
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     autoRefreshToken: false,
-    persistSession: false
-  }
+    persistSession: false,
+  },
 });
 ```
 
@@ -102,8 +103,8 @@ Check if RLS is blocking user creation:
 
 ```sql
 -- In Supabase SQL Editor
-SELECT tablename, rowsecurity 
-FROM pg_tables 
+SELECT tablename, rowsecurity
+FROM pg_tables
 WHERE schemaname = 'auth';
 
 -- Temporarily disable RLS on auth.users (ONLY FOR LOCAL DEV!)
@@ -168,10 +169,10 @@ Add this to global-setup.ts for more details:
 
 ```typescript
 // After signUp
-console.log('SignUp response:', JSON.stringify(signUpData, null, 2));
+console.log("SignUp response:", JSON.stringify(signUpData, null, 2));
 
 // After signIn attempt
-console.log('SignIn error:', JSON.stringify(signInError, null, 2));
+console.log("SignIn error:", JSON.stringify(signInError, null, 2));
 ```
 
 ## Success Criteria ✅
@@ -191,4 +192,3 @@ npx playwright test dashboard.e2e.test.ts --workers=1 --max-failures=1
 
 **Status:** Investigating login issue  
 **Last Updated:** 2026-01-26 20:15
-

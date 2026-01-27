@@ -330,7 +330,7 @@ describe("validateAntiSpam", () => {
       const lastEntry = "2026-01-26T14:30:00.000Z";
       const currentAttempt = "2026-01-26T14:45:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
-      
+
       expect(result.canCreate).toBe(false);
       expect(result.retryAfter).toBe("2026-01-26T15:00:00.000Z");
     });
@@ -339,7 +339,7 @@ describe("validateAntiSpam", () => {
       const lastEntry = "2026-01-26T14:00:00.000Z";
       const currentAttempt = "2026-01-26T14:59:59.999Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
-      
+
       expect(result.canCreate).toBe(false);
       expect(result.retryAfter).toBe("2026-01-26T15:00:00.000Z");
     });
@@ -348,7 +348,7 @@ describe("validateAntiSpam", () => {
       const lastEntry = "2026-01-26T14:30:00.000Z";
       const currentAttempt = "2026-01-26T14:30:01.000Z"; // 1 second later
       const result = validateAntiSpam(lastEntry, currentAttempt);
-      
+
       expect(result.canCreate).toBe(false);
       expect(result.retryAfter).toBe("2026-01-26T15:00:00.000Z");
     });
@@ -359,7 +359,7 @@ describe("validateAntiSpam", () => {
       const lastEntry = "2026-01-26T14:30:00.000Z";
       const currentAttempt = "2026-01-26T15:00:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
-      
+
       expect(result.canCreate).toBe(true);
       expect(result.retryAfter).toBeUndefined();
     });
@@ -368,7 +368,7 @@ describe("validateAntiSpam", () => {
       const lastEntry = "2026-01-26T14:30:00.000Z";
       const currentAttempt = "2026-01-26T18:15:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
-      
+
       expect(result.canCreate).toBe(true);
       expect(result.retryAfter).toBeUndefined();
     });
@@ -377,7 +377,7 @@ describe("validateAntiSpam", () => {
       const lastEntry = "2026-01-26T14:59:59.999Z";
       const currentAttempt = "2026-01-26T15:00:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
-      
+
       expect(result.canCreate).toBe(true);
       expect(result.retryAfter).toBeUndefined();
     });
@@ -386,7 +386,7 @@ describe("validateAntiSpam", () => {
       const lastEntry = "2026-01-26T14:30:00.000Z";
       const currentAttempt = "2026-01-27T14:30:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
-      
+
       expect(result.canCreate).toBe(true);
       expect(result.retryAfter).toBeUndefined();
     });
@@ -397,7 +397,7 @@ describe("validateAntiSpam", () => {
       const lastEntry = "2026-01-26T00:10:00.000Z";
       const currentAttempt = "2026-01-26T00:45:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
-      
+
       expect(result.canCreate).toBe(false);
       expect(result.retryAfter).toBe("2026-01-26T01:00:00.000Z");
     });
@@ -406,7 +406,7 @@ describe("validateAntiSpam", () => {
       const lastEntry = "2026-01-26T23:30:00.000Z";
       const currentAttempt = "2026-01-27T00:00:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
-      
+
       expect(result.canCreate).toBe(true);
       expect(result.retryAfter).toBeUndefined();
     });
@@ -415,7 +415,7 @@ describe("validateAntiSpam", () => {
       const lastEntry = "2026-01-26T23:00:00.000Z";
       const currentAttempt = "2026-01-26T23:59:59.999Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
-      
+
       expect(result.canCreate).toBe(false);
       expect(result.retryAfter).toBe("2026-01-27T00:00:00.000Z");
     });
@@ -426,7 +426,7 @@ describe("validateAntiSpam", () => {
       const lastEntry = "2026-12-31T23:30:00.000Z";
       const currentAttempt = "2027-01-01T00:00:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
-      
+
       expect(result.canCreate).toBe(true);
       expect(result.retryAfter).toBeUndefined();
     });
@@ -435,7 +435,7 @@ describe("validateAntiSpam", () => {
       const lastEntry = "2026-12-31T23:00:00.000Z";
       const currentAttempt = "2026-12-31T23:45:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
-      
+
       expect(result.canCreate).toBe(false);
       expect(result.retryAfter).toBe("2027-01-01T00:00:00.000Z");
     });
@@ -445,20 +445,16 @@ describe("validateAntiSpam", () => {
     it("should enforce exactly 1 entry per hour per user", () => {
       // User creates entry at 14:15
       const firstEntry = "2026-01-26T14:15:00.000Z";
-      
+
       // Attempts at 14:20, 14:30, 14:50 should all be blocked
-      const attempts = [
-        "2026-01-26T14:20:00.000Z",
-        "2026-01-26T14:30:00.000Z",
-        "2026-01-26T14:50:00.000Z",
-      ];
+      const attempts = ["2026-01-26T14:20:00.000Z", "2026-01-26T14:30:00.000Z", "2026-01-26T14:50:00.000Z"];
 
       attempts.forEach((attempt) => {
         const result = validateAntiSpam(firstEntry, attempt);
         expect(result.canCreate).toBe(false);
         expect(result.retryAfter).toBe("2026-01-26T15:00:00.000Z");
       });
-      
+
       // But 15:00 should be allowed
       const allowedAttempt = "2026-01-26T15:00:00.000Z";
       const allowedResult = validateAntiSpam(firstEntry, allowedAttempt);
@@ -466,4 +462,3 @@ describe("validateAntiSpam", () => {
     });
   });
 });
-

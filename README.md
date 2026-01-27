@@ -20,12 +20,14 @@ A productivity tracking application that helps developers monitor their flow sta
 ### Testing Technologies
 
 #### Unit & Component Testing
+
 - [Vitest](https://vitest.dev/) - Fast unit test framework compatible with Vite/Astro ecosystem
 - [React Testing Library](https://testing-library.com/react) - Testing React components with user-centric approach
 - [@testing-library/user-event](https://testing-library.com/docs/user-event/intro) - User interaction simulation in component tests
 - [MSW (Mock Service Worker)](https://mswjs.io/) - API mocking at the network level for testing edge cases
 
 #### End-to-End Testing
+
 - [Playwright](https://playwright.dev/) - E2E testing framework with multi-browser support
 
 ## Prerequisites
@@ -100,16 +102,19 @@ npm run build
 ## Available Scripts
 
 ### Development
+
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 
 ### Code Quality
+
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint issues
 - `npm run format` - Format code with Prettier
 
 ### Testing
+
 - `npm run test` - Run unit tests in watch mode
 - `npm run test:unit` - Run unit tests once
 - `npm run test:watch` - Run unit tests in watch mode
@@ -126,18 +131,21 @@ npm run build
 VibeCheck uses a comprehensive testing approach to ensure code quality and reliability:
 
 ### Unit & Integration Tests (Vitest)
+
 - **Business Logic:** Testing functions for focus score calculation, validators, and utilities
 - **React Components:** Testing UI components with React Testing Library
 - **API Integration:** Testing API communication with MSW (Mock Service Worker) for mocked responses
 - Test coverage includes edge cases, error handling, and user interactions
 
 ### End-to-End Tests (Playwright)
+
 - **User Journeys:** Complete authentication flows (signup, login, logout)
 - **CRUD Operations:** Creating, reading, updating, and deleting productivity entries
 - **Data Isolation:** Ensuring users can only access their own data (RLS verification)
 - **Cross-browser:** Testing across multiple browsers for compatibility
 
 Run tests with:
+
 ```bash
 npm run test              # Unit & integration tests (watch mode)
 npm run test:unit         # Unit tests (single run)
@@ -152,23 +160,23 @@ For detailed testing documentation, see [TESTING.md](./TESTING.md)
 ```md
 .
 ├── src/
-│   ├── layouts/       # Astro layouts
-│   ├── pages/         # Astro pages (routes)
-│   │   └── api/       # API endpoints
-│   ├── components/    # UI components (Astro & React)
-│   │   └── ui/        # Shadcn/ui components
-│   ├── db/            # Supabase clients and types
-│   ├── lib/           # Services and utilities
-│   │   ├── services/  # Business logic services
-│   │   ├── utils/     # Helper functions
-│   │   └── validators/# Validation functions
-│   ├── hooks/         # React hooks
-│   ├── middleware/    # Astro middleware (auth)
-│   ├── types/         # TypeScript type definitions
-│   └── assets/        # Static assets
-├── public/            # Public assets
-└── supabase/          # Supabase configuration
-    └── migrations/    # Database migrations
+│ ├── layouts/ # Astro layouts
+│ ├── pages/ # Astro pages (routes)
+│ │ └── api/ # API endpoints
+│ ├── components/ # UI components (Astro & React)
+│ │ └── ui/ # Shadcn/ui components
+│ ├── db/ # Supabase clients and types
+│ ├── lib/ # Services and utilities
+│ │ ├── services/ # Business logic services
+│ │ ├── utils/ # Helper functions
+│ │ └── validators/# Validation functions
+│ ├── hooks/ # React hooks
+│ ├── middleware/ # Astro middleware (auth)
+│ ├── types/ # TypeScript type definitions
+│ └── assets/ # Static assets
+├── public/ # Public assets
+└── supabase/ # Supabase configuration
+└── migrations/ # Database migrations
 ```
 
 ## CI/CD Pipeline

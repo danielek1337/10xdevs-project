@@ -37,4 +37,3 @@ export const resetPasswordFormSchema = resetPasswordSchema
 // Type exports
 export type SignupFormData = z.infer<typeof signupFormSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordFormSchema>;
-

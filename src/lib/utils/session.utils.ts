@@ -83,4 +83,3 @@ export function hasValidSession(): boolean {
   if (!session) return false;
   return !isSessionExpired(session);
 }
-

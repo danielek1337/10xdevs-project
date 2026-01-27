@@ -1,8 +1,8 @@
 /**
  * FocusScoreWidget Component
- * 
+ *
  * Displays current Daily Focus Score with breakdown, metrics, and 7-day trend.
- * 
+ *
  * Features:
  * - Current score display (large number 0-100)
  * - Score breakdown (mood, consistency, distribution)
@@ -51,12 +51,7 @@ function MetricCard({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "flex items-center gap-3 rounded-lg border bg-card p-3",
-        className
-      )}
-    >
+    <div className={cn("flex items-center gap-3 rounded-lg border bg-card p-3", className)}>
       <div className="rounded-md bg-primary/10 p-2">
         <Icon className="size-4 text-primary" />
       </div>
@@ -81,15 +76,11 @@ function ScoreBreakdown({ score }: { score: FocusScoreDTO }) {
         <p className="text-xs text-muted-foreground">Nastrój</p>
       </div>
       <div className="text-center">
-        <p className="text-2xl font-bold text-primary">
-          {consistency_score.toFixed(0)}
-        </p>
+        <p className="text-2xl font-bold text-primary">{consistency_score.toFixed(0)}</p>
         <p className="text-xs text-muted-foreground">Konsystencja</p>
       </div>
       <div className="text-center">
-        <p className="text-2xl font-bold text-primary">
-          {distribution_score.toFixed(0)}
-        </p>
+        <p className="text-2xl font-bold text-primary">{distribution_score.toFixed(0)}</p>
         <p className="text-xs text-muted-foreground">Rozkład</p>
       </div>
     </div>
@@ -107,12 +98,7 @@ export function FocusScoreWidget({
   // Loading state
   if (isLoading) {
     return (
-      <div
-        className={cn(
-          "rounded-lg border bg-card p-6 space-y-4",
-          className
-        )}
-      >
+      <div className={cn("rounded-lg border bg-card p-6 space-y-4", className)}>
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-24 w-full" />
         <div className="grid grid-cols-3 gap-4">
@@ -128,12 +114,7 @@ export function FocusScoreWidget({
   // Error state
   if (error) {
     return (
-      <div
-        className={cn(
-          "rounded-lg border bg-card p-6 text-center space-y-4",
-          className
-        )}
-      >
+      <div className={cn("rounded-lg border bg-card p-6 text-center space-y-4", className)}>
         <p className="text-sm text-destructive">{error}</p>
         {onRetry && (
           <Button variant="outline" size="sm" onClick={onRetry}>
@@ -147,19 +128,13 @@ export function FocusScoreWidget({
   // Empty state (new user)
   if (!todayScore && trendData.length === 0) {
     return (
-      <div
-        className={cn(
-          "rounded-lg border bg-card p-6 text-center space-y-2",
-          className
-        )}
-      >
+      <div className={cn("rounded-lg border bg-card p-6 text-center space-y-2", className)}>
         <div className="rounded-full bg-muted p-4 inline-block mb-2">
           <TrendingUp className="size-8 text-muted-foreground" />
         </div>
         <h3 className="text-lg font-semibold">Focus Score</h3>
         <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-          Stwórz swój pierwszy wpis, aby zobaczyć swój Focus Score i śledzić
-          produktywność!
+          Stwórz swój pierwszy wpis, aby zobaczyć swój Focus Score i śledzić produktywność!
         </p>
       </div>
     );
@@ -175,9 +150,7 @@ export function FocusScoreWidget({
         </h2>
         {todayScore && (
           <div className="text-right">
-            <p className="text-3xl font-bold text-primary">
-              {todayScore.focus_score.toFixed(0)}
-            </p>
+            <p className="text-3xl font-bold text-primary">{todayScore.focus_score.toFixed(0)}</p>
             <p className="text-xs text-muted-foreground">/ 100</p>
           </div>
         )}
@@ -186,9 +159,7 @@ export function FocusScoreWidget({
       {/* Score breakdown */}
       {todayScore && (
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            Komponenty wyniku
-          </h3>
+          <h3 className="text-sm font-medium text-muted-foreground">Komponenty wyniku</h3>
           <ScoreBreakdown score={todayScore} />
         </div>
       )}
@@ -196,34 +167,19 @@ export function FocusScoreWidget({
       {/* Metrics cards */}
       {todayScore && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <MetricCard
-            icon={Activity}
-            label="Wpisy"
-            value={todayScore.entry_count}
-          />
-          <MetricCard
-            icon={Zap}
-            label="Średni nastrój"
-            value={todayScore.avg_mood.toFixed(1)}
-          />
-          <MetricCard
-            icon={Clock}
-            label="Czas pracy"
-            value={formatSpanMinutes(todayScore.span_minutes)}
-          />
+          <MetricCard icon={Activity} label="Wpisy" value={todayScore.entry_count} />
+          <MetricCard icon={Zap} label="Średni nastrój" value={todayScore.avg_mood.toFixed(1)} />
+          <MetricCard icon={Clock} label="Czas pracy" value={formatSpanMinutes(todayScore.span_minutes)} />
         </div>
       )}
 
       {/* Trend chart */}
       {trendData.length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            Trend (ostatnie 7 dni)
-          </h3>
+          <h3 className="text-sm font-medium text-muted-foreground">Trend (ostatnie 7 dni)</h3>
           <TrendChart data={trendData} height={200} />
         </div>
       )}
     </div>
   );
 }
-

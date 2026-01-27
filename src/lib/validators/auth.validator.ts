@@ -9,11 +9,7 @@ import { z } from "zod";
 
 // Email validation schema
 export const emailSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email is required")
-    .email("Invalid email address")
-    .max(255, "Email is too long"),
+  email: z.string().min(1, "Email is required").email("Invalid email address").max(255, "Email is too long"),
 });
 
 // Password validation schema
@@ -48,4 +44,3 @@ export type LoginDTO = z.infer<typeof loginSchema>;
 export type SignupDTO = z.infer<typeof signupSchema>;
 export type ForgotPasswordDTO = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordDTO = z.infer<typeof resetPasswordSchema>;
-

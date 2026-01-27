@@ -7,25 +7,25 @@ VibeCheck MVP - UI Architecture Planning Summary
 1. Decisions Made
 
 1. Dashboard Layout: Jeden zintegrowany widok Dashboard zawierający wszystkie główne funkcjonalności
-2. Focus Score Placement: Dedykowana sekcja na Dashboard jako prominent widget
-3. Anti-spam UX: Formularz disabled z countdown timerem do następnej dostępnej godziny
-4. Filtering Interface: Kompaktowy top-bar z dropdownami dla sortowania i filtrowania
-5. Error Handling: Kombinacja Shadcn Toast dla success/global errors i inline errors dla walidacji formularzy
-6. Tag Management: Combobox/autocomplete pokazujący istniejące tags z możliwością tworzenia nowych
-7. Responsive Strategy: Mobile-first approach z breakpoints: mobile (default), tablet (md: 768px), desktop (lg: 1024px)
-8. Authentication Flow: Osobne route's (/login, /signup) zamiast modali
-9. State Management: React Context API dla auth state, React hooks dla component state
-10. Pagination: Klasyczna paginacja z Previous/Next buttons
-11. Dashboard Structure: Desktop - dwukolumnowy layout (Focus Score + formularz), Mobile - vertical stack
-12. Entry Display: Cards z mood indicator, task (truncated), timestamp, tags; notes expandable
-13. Mood Visualization: Kombinacja liczby (1-5) i gradientu kolorów (czerwony→żółty→zielony)
-14. Entry Editing: Modal/Dialog z pre-filled formularzem (zachowanie created_at)
-15. Trend Chart: Area chart z ostatnimi 7 dniami z tooltipami na hover
-16. Navigation: Persistent header na authenticated pages z logo i user menu dropdown
-17. Empty States: Trzy warianty - nowy użytkownik, puste filtry, brak danych
-18. Form Persistence: Submit on-demand bez auto-save dla MVP
-19. Delete Confirmation: Two-step process z AlertDialog i confirmation
-20. Search Functionality: Real-time search-as-you-type z debounce (300-500ms)
+1. Focus Score Placement: Dedykowana sekcja na Dashboard jako prominent widget
+1. Anti-spam UX: Formularz disabled z countdown timerem do następnej dostępnej godziny
+1. Filtering Interface: Kompaktowy top-bar z dropdownami dla sortowania i filtrowania
+1. Error Handling: Kombinacja Shadcn Toast dla success/global errors i inline errors dla walidacji formularzy
+1. Tag Management: Combobox/autocomplete pokazujący istniejące tags z możliwością tworzenia nowych
+1. Responsive Strategy: Mobile-first approach z breakpoints: mobile (default), tablet (md: 768px), desktop (lg: 1024px)
+1. Authentication Flow: Osobne route's (/login, /signup) zamiast modali
+1. State Management: React Context API dla auth state, React hooks dla component state
+1. Pagination: Klasyczna paginacja z Previous/Next buttons
+1. Dashboard Structure: Desktop - dwukolumnowy layout (Focus Score + formularz), Mobile - vertical stack
+1. Entry Display: Cards z mood indicator, task (truncated), timestamp, tags; notes expandable
+1. Mood Visualization: Kombinacja liczby (1-5) i gradientu kolorów (czerwony→żółty→zielony)
+1. Entry Editing: Modal/Dialog z pre-filled formularzem (zachowanie created_at)
+1. Trend Chart: Area chart z ostatnimi 7 dniami z tooltipami na hover
+1. Navigation: Persistent header na authenticated pages z logo i user menu dropdown
+1. Empty States: Trzy warianty - nowy użytkownik, puste filtry, brak danych
+1. Form Persistence: Submit on-demand bez auto-save dla MVP
+1. Delete Confirmation: Two-step process z AlertDialog i confirmation
+1. Search Functionality: Real-time search-as-you-type z debounce (300-500ms)
 
 </decisions>
 
@@ -55,10 +55,10 @@ Search: Debounced real-time search (min 2 chars) z loading indicator, reset pagi
 
 Visual Design
 
-Mood Indicators: 
-  Form: 5-button group z numerami i gradient kolorów
-  Cards: Colored badge z numerem
-  Optional emoji overlay dla lepszego UX
+Mood Indicators:
+Form: 5-button group z numerami i gradient kolorów
+Cards: Colored badge z numerem
+Optional emoji overlay dla lepszego UX
 
 Charts: Area chart z Recharts, gradient fill, tooltips z breakdown (entry_count, avg_mood, span_minutes)
 
@@ -69,14 +69,14 @@ Error & State Management
 Loading States: Skeleton screens (Shadcn Skeleton) dla entries list
 
 Error Handling:
-  Toast: success messages, global errors (network issues)
-  Inline: form validation errors (React Hook Form + Shadcn Form)
-  Alert: anti-spam violation z retry_after info
+Toast: success messages, global errors (network issues)
+Inline: form validation errors (React Hook Form + Shadcn Form)
+Alert: anti-spam violation z retry_after info
 
-Empty States: 
-  Nowy użytkownik: welcoming message + CTA
-  Puste filtry: "No entries found" + "Clear filters" button
-  Brak danych: "No data for this period" w chart area
+Empty States:
+Nowy użytkownik: welcoming message + CTA
+Puste filtry: "No entries found" + "Clear filters" button
+Brak danych: "No data for this period" w chart area
 
 Technical Implementation
 
@@ -151,34 +151,34 @@ Main Dashboard Components Hierarchy
 
 Endpoints Usage Mapping
 
-| UI Component | API Endpoint | Method | Purpose |
-|--------------|--------------|--------|---------|
-| Login Form | /api/auth/login | POST | User authentication |
-| Signup Form | /api/auth/signup | POST | User registration |
-| User Menu Logout | /api/auth/logout | POST | Session invalidation |
-| Focus Score Widget | /api/focus-scores | GET | Fetch 7-day scores with ?date_from= & ?date_to= |
-| Entry Form Submit | /api/entries | POST | Create new entry |
-| Entries List | /api/entries | GET | Fetch paginated entries with filters |
-| Entry Edit Modal | /api/entries/:id | PATCH | Update existing entry |
-| Entry Delete | /api/entries/:id | DELETE | Soft delete entry |
-| Tags Autocomplete | /api/tags | GET | Fetch available tags with ?search= |
+| UI Component       | API Endpoint      | Method | Purpose                                         |
+| ------------------ | ----------------- | ------ | ----------------------------------------------- |
+| Login Form         | /api/auth/login   | POST   | User authentication                             |
+| Signup Form        | /api/auth/signup  | POST   | User registration                               |
+| User Menu Logout   | /api/auth/logout  | POST   | Session invalidation                            |
+| Focus Score Widget | /api/focus-scores | GET    | Fetch 7-day scores with ?date_from= & ?date_to= |
+| Entry Form Submit  | /api/entries      | POST   | Create new entry                                |
+| Entries List       | /api/entries      | GET    | Fetch paginated entries with filters            |
+| Entry Edit Modal   | /api/entries/:id  | PATCH  | Update existing entry                           |
+| Entry Delete       | /api/entries/:id  | DELETE | Soft delete entry                               |
+| Tags Autocomplete  | /api/tags         | GET    | Fetch available tags with ?search=              |
 
 Data Flow Patterns
 
 1. Authentication Flow
 
-  User submits login/signup form
-  API returns JWT tokens (access + refresh)
-  Store user info + token in React Context
-  Redirect to /dashboard
-  All subsequent API calls include Authorization: Bearer {token} header
+User submits login/signup form
+API returns JWT tokens (access + refresh)
+Store user info + token in React Context
+Redirect to /dashboard
+All subsequent API calls include Authorization: Bearer {token} header
 
 2. Dashboard Initial Load
 
 Parallel API calls:
-  Fetch last 7 days focus scores
-  Fetch first page of entries (default: 20 items, sorted by created_at desc)
-  Fetch all tags for autocomplete
+Fetch last 7 days focus scores
+Fetch first page of entries (default: 20 items, sorted by created_at desc)
+Fetch all tags for autocomplete
 
 Loading: Show skeleton loaders during fetch
 
@@ -187,36 +187,36 @@ Result: Populate components with data
 3. Entry Creation Flow
 
 1. User fills form (mood, task, notes, tags)
-2. Real-time validation (mood 1-5, task min 3 chars, tags format)
-3. On submit → POST /api/entries
-4. Success: Clear form, show toast, prepend new entry to list, refresh focus score
-5. 409 Anti-spam Error: Disable form, show countdown timer with retry_after
-6. 400 Validation Error: Show inline errors per field
+1. Real-time validation (mood 1-5, task min 3 chars, tags format)
+1. On submit → POST /api/entries
+1. Success: Clear form, show toast, prepend new entry to list, refresh focus score
+1. 409 Anti-spam Error: Disable form, show countdown timer with retry_after
+1. 400 Validation Error: Show inline errors per field
 
-4. Filtering & Search Flow
+1. Filtering & Search Flow
 
 1. User changes filter/search → Update URL params (for shareability)
-2. Debounced API call (300-500ms for search)
-3. Reset pagination to page 1
-4. Show loading state in entries list
-5. Update entries list with filtered results
+1. Debounced API call (300-500ms for search)
+1. Reset pagination to page 1
+1. Show loading state in entries list
+1. Update entries list with filtered results
 
-5. Entry Edit Flow
+1. Entry Edit Flow
 
 1. Click Edit in dropdown → Fetch entry details (or use cached data)
-2. Open modal with pre-filled form
-3. On submit → PATCH /api/entries/:id
-4. Success: Update entry in list (optimistic update), close modal, show toast
-5. Error: Show inline errors in modal
+1. Open modal with pre-filled form
+1. On submit → PATCH /api/entries/:id
+1. Success: Update entry in list (optimistic update), close modal, show toast
+1. Error: Show inline errors in modal
 
-6. Entry Delete Flow
+1. Entry Delete Flow
 
 1. Click Delete → Show AlertDialog confirmation
-2. On confirm → DELETE /api/entries/:id
-3. Success: Remove entry from list (optimistic), show toast, refresh focus score
-4. 404 Error: Already deleted, remove from UI
+1. On confirm → DELETE /api/entries/:id
+1. Success: Remove entry from list (optimistic), show toast, refresh focus score
+1. 404 Error: Already deleted, remove from UI
 
-5. State Management Architecture
+1. State Management Architecture
 
 Context API Structure
 
@@ -254,59 +254,59 @@ Each hook manages its own loading/error state with optimistic updates for create
 Breakpoints (Tailwind-based)
 
 Mobile (default, < 768px):
-  Vertical stack layout
-  Full-width components
-  Compact entry cards
-  Bottom sheet for filters (if space constrained)
-  Simplified pagination (prev/next only)
+Vertical stack layout
+Full-width components
+Compact entry cards
+Bottom sheet for filters (if space constrained)
+Simplified pagination (prev/next only)
 
 Tablet (md: 768px - 1023px):
-  Hybrid layout
-  Focus Score + Form może być two-column
-  Entries list - wider cards
-  Full filter bar visible
+Hybrid layout
+Focus Score + Form może być two-column
+Entries list - wider cards
+Full filter bar visible
 
 Desktop (lg: 1024px+):
-  Full two-column layout
-  Sticky Focus Score widget (optional)
-  Table-like entry display (alternative to cards)
-  Expanded filter options
+Full two-column layout
+Sticky Focus Score widget (optional)
+Table-like entry display (alternative to cards)
+Expanded filter options
 
 Component Adaptations
 
-| Component | Mobile | Desktop |
-|-----------|--------|---------|
-| Focus Score Widget | Compact, simplified chart | Full widget, detailed chart |
-| Entry Form | Full-width, vertical | Max-width container (max-w-2xl) |
-| Entries List | Stacked cards | Cards or table hybrid |
-| Filters | Collapsible/bottom sheet | Always visible top-bar |
-| Pagination | Prev/Next only | Full pagination with page numbers |
-| Entry Actions | Long press or slide actions | Hover + dropdown menu |
+| Component          | Mobile                      | Desktop                           |
+| ------------------ | --------------------------- | --------------------------------- |
+| Focus Score Widget | Compact, simplified chart   | Full widget, detailed chart       |
+| Entry Form         | Full-width, vertical        | Max-width container (max-w-2xl)   |
+| Entries List       | Stacked cards               | Cards or table hybrid             |
+| Filters            | Collapsible/bottom sheet    | Always visible top-bar            |
+| Pagination         | Prev/Next only              | Full pagination with page numbers |
+| Entry Actions      | Long press or slide actions | Hover + dropdown menu             |
 
 7. Security & Authentication
 
 1. Protected Routes: Middleware checks auth token before rendering /dashboard
-2. Token Management: 
-     Access token in memory (Context)
-     Refresh token in httpOnly cookie or secure localStorage
-     Auto-refresh on 401 errors
-3. RLS Enforcement: All API calls automatically filtered by user_id via Supabase RLS
-4. Input Validation: 
-     Client-side validation for UX (immediate feedback)
-     Server-side validation as source of truth (API responses)
-5. XSS Prevention: Sanitize user inputs before display (notes, task fields)
+1. Token Management:
+   Access token in memory (Context)
+   Refresh token in httpOnly cookie or secure localStorage
+   Auto-refresh on 401 errors
+1. RLS Enforcement: All API calls automatically filtered by user_id via Supabase RLS
+1. Input Validation:
+   Client-side validation for UX (immediate feedback)
+   Server-side validation as source of truth (API responses)
+1. XSS Prevention: Sanitize user inputs before display (notes, task fields)
 
-8. Accessibility Considerations
+1. Accessibility Considerations
 
 1. Semantic HTML: Proper heading hierarchy, landmarks (header, main, nav)
-2. Keyboard Navigation: All interactive elements focusable, logical tab order
-3. ARIA Labels: For icon buttons, dropdowns, form fields
-4. Color Contrast: WCAG AA compliance for text and mood indicators
-5. Screen Reader Support: Announce dynamic content changes (new entry, errors)
-6. Focus Management: Trap focus in modals, return focus after close
-7. Error Messages: Associated with form fields via aria-describedby
+1. Keyboard Navigation: All interactive elements focusable, logical tab order
+1. ARIA Labels: For icon buttons, dropdowns, form fields
+1. Color Contrast: WCAG AA compliance for text and mood indicators
+1. Screen Reader Support: Announce dynamic content changes (new entry, errors)
+1. Focus Management: Trap focus in modals, return focus after close
+1. Error Messages: Associated with form fields via aria-describedby
 
-9. Component Library & Styling
+1. Component Library & Styling
 
 Shadcn/ui Components Used
 
@@ -330,15 +330,15 @@ Animations: Subtle transitions for better UX (fade-in, slide-in)
 10. Performance Optimizations
 
 1. Code Splitting: Separate bundles for auth pages vs dashboard
-2. Lazy Loading: Charts library loaded only when Focus Score visible
-3. Memoization: 
-     React.memo() for EntryCard components
-     useMemo() for expensive calculations (focus score breakdown)
-     useCallback() for event handlers passed to children
-4. Debouncing: Search input (300-500ms), filter changes
-5. Optimistic Updates: Immediate UI feedback for create/update/delete
-6. Skeleton Screens: Better perceived performance than spinners
-7. Pagination: Limit API payload size (20 items default, max 100)
+1. Lazy Loading: Charts library loaded only when Focus Score visible
+1. Memoization:
+   React.memo() for EntryCard components
+   useMemo() for expensive calculations (focus score breakdown)
+   useCallback() for event handlers passed to children
+1. Debouncing: Search input (300-500ms), filter changes
+1. Optimistic Updates: Immediate UI feedback for create/update/delete
+1. Skeleton Screens: Better perceived performance than spinners
+1. Pagination: Limit API payload size (20 items default, max 100)
 
 </ui_architecture_planning_summary>
 
@@ -383,6 +383,7 @@ Bulk operations UI
 12. Next Steps
 
 Immediate Actions:
+
 1. Rozpocząć implementację od podstawowej struktury routing i authentication flow
 2. Utworzyć AuthContext i protected route middleware
 3. Zbudować layout components (PersistentHeader, Dashboard container)
@@ -390,6 +391,7 @@ Immediate Actions:
 5. Utworzyć EntriesList z pagination i filtering
 
 Priority Order:
+
 1. Authentication (login/signup/logout)
 2. Entry creation (form + API integration)
 3. Entries list display (basic, bez filtrów)

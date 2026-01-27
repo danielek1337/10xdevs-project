@@ -1,8 +1,8 @@
 /**
  * DeleteConfirmationDialog Component
- * 
+ *
  * Alert dialog for confirming entry deletion (two-step confirmation).
- * 
+ *
  * Features:
  * - AlertDialog with destructive action
  * - Warning message
@@ -34,11 +34,7 @@ interface DeleteConfirmationDialogProps {
   onConfirm: (entryId: string) => Promise<void>;
 }
 
-export function DeleteConfirmationDialog({
-  entryId,
-  onClose,
-  onConfirm,
-}: DeleteConfirmationDialogProps) {
+export function DeleteConfirmationDialog({ entryId, onClose, onConfirm }: DeleteConfirmationDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,7 +52,7 @@ export function DeleteConfirmationDialog({
       onClose();
     } catch (err) {
       console.error("Error deleting entry:", err);
-      
+
       // Handle specific error cases
       if (err instanceof Error) {
         if (err.message.includes("404")) {
@@ -92,9 +88,7 @@ export function DeleteConfirmationDialog({
           <AlertDialogDescription className="pt-2">
             Czy na pewno chcesz usunąć ten wpis produktywności?
             <br />
-            <strong className="text-foreground">
-              Tej akcji nie można cofnąć.
-            </strong>
+            <strong className="text-foreground">Tej akcji nie można cofnąć.</strong>
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -125,4 +119,3 @@ export function DeleteConfirmationDialog({
     </AlertDialog>
   );
 }
-

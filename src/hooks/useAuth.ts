@@ -8,12 +8,7 @@
 import { useState, useRef, useEffect } from "react";
 import { storeAuthSession } from "@/lib/utils/session.utils";
 import type { LoginDTO, SignupDTO } from "@/lib/validators/auth.validator";
-import type {
-  LoginResponseDTO,
-  SignupResponseDTO,
-  MessageResponseDTO,
-  ErrorResponseDTO,
-} from "@/types";
+import type { LoginResponseDTO, SignupResponseDTO, MessageResponseDTO, ErrorResponseDTO } from "@/types";
 
 /**
  * Generic auth mutation hook
@@ -91,9 +86,7 @@ function useAuthMutation<TData, TResponse>(
  * Handles user authentication and session storage
  */
 export function useLogin() {
-  const { mutate, isLoading, error, reset } = useAuthMutation<LoginDTO, LoginResponseDTO>(
-    "/api/auth/login"
-  );
+  const { mutate, isLoading, error, reset } = useAuthMutation<LoginDTO, LoginResponseDTO>("/api/auth/login");
 
   const login = async (data: LoginDTO) => {
     const result = await mutate(data);
@@ -110,18 +103,16 @@ export function useLogin() {
  * Handles user registration
  */
 export function useSignup() {
-  const { mutate, isLoading, error, reset } = useAuthMutation<SignupDTO, SignupResponseDTO>(
-    "/api/auth/signup"
-  );
+  const { mutate, isLoading, error, reset } = useAuthMutation<SignupDTO, SignupResponseDTO>("/api/auth/signup");
 
   const signup = async (data: SignupDTO) => {
     const result = await mutate(data);
-    
+
     // Check if email confirmation is required
     if ((result as any).requiresEmailConfirmation) {
       return { ...result, requiresEmailConfirmation: true };
     }
-    
+
     // Store session after successful signup (if no email confirmation required)
     storeAuthSession(result.session, false);
     return result;
@@ -135,10 +126,9 @@ export function useSignup() {
  * Sends password reset email
  */
 export function useForgotPassword() {
-  const { mutate, isLoading, error, reset } = useAuthMutation<
-    { email: string },
-    MessageResponseDTO
-  >("/api/auth/forgot-password");
+  const { mutate, isLoading, error, reset } = useAuthMutation<{ email: string }, MessageResponseDTO>(
+    "/api/auth/forgot-password"
+  );
 
   const sendResetEmail = async (email: string) => {
     return await mutate({ email });
@@ -152,10 +142,9 @@ export function useForgotPassword() {
  * Updates user password with reset token
  */
 export function useResetPassword() {
-  const { mutate, isLoading, error, reset } = useAuthMutation<
-    { password: string },
-    MessageResponseDTO
-  >("/api/auth/reset-password");
+  const { mutate, isLoading, error, reset } = useAuthMutation<{ password: string }, MessageResponseDTO>(
+    "/api/auth/reset-password"
+  );
 
   const resetPassword = async (accessToken: string, password: string) => {
     return await mutate(
@@ -168,4 +157,3 @@ export function useResetPassword() {
 
   return { resetPassword, isLoading, error, reset };
 }
-

@@ -13,6 +13,7 @@ This document describes the comprehensive unit testing suite for VibeCheck's ant
 ## 📁 Files Created
 
 ### 1. `src/lib/utils/anti-spam.utils.ts`
+
 Pure functions implementing anti-spam logic (testable without database):
 
 - `calculateRetryAfter()` - Calculates when user can retry (+5 minutes from last entry)
@@ -21,6 +22,7 @@ Pure functions implementing anti-spam logic (testable without database):
 - `validateAntiSpam()` - Main validation function returning `{ canCreate, retryAfter? }`
 
 ### 2. `src/lib/utils/anti-spam.utils.test.ts`
+
 Comprehensive test suite with **53 passing tests** covering:
 
 - ✅ Basic functionality
@@ -33,17 +35,18 @@ Comprehensive test suite with **53 passing tests** covering:
 
 ### Test Categories
 
-| Function | Tests | Coverage Areas |
-|----------|-------|----------------|
-| `calculateHourBucketUtc` | 13 | Basic truncation, hour boundaries, midnight, month/year transitions, leap year, DST |
-| `calculateRetryAfter` | 8 | Next hour calculation, day/month/year boundaries |
-| `calculateMinutesUntilRetry` | 11 | Minute calculation, rounding behavior, edge cases, default parameters |
-| `isInSameHourBucket` | 8 | Same/different hour detection, boundary cases, day transitions |
-| `validateAntiSpam` | 13 | Violation scenarios, allowed scenarios, midnight/year transitions, business rule |
+| Function                     | Tests | Coverage Areas                                                                      |
+| ---------------------------- | ----- | ----------------------------------------------------------------------------------- |
+| `calculateHourBucketUtc`     | 13    | Basic truncation, hour boundaries, midnight, month/year transitions, leap year, DST |
+| `calculateRetryAfter`        | 8     | Next hour calculation, day/month/year boundaries                                    |
+| `calculateMinutesUntilRetry` | 11    | Minute calculation, rounding behavior, edge cases, default parameters               |
+| `isInSameHourBucket`         | 8     | Same/different hour detection, boundary cases, day transitions                      |
+| `validateAntiSpam`           | 13    | Violation scenarios, allowed scenarios, midnight/year transitions, business rule    |
 
 ### Key Test Scenarios
 
 #### ✅ **5-Minute Windows**
+
 ```typescript
 // Within 5 minutes → Blocked
 "2026-01-26T14:30:00.000Z" → "2026-01-26T14:34:59.999Z" ✗
@@ -53,6 +56,7 @@ Comprehensive test suite with **53 passing tests** covering:
 ```
 
 #### ✅ **Retry Calculation**
+
 ```typescript
 // Entry at specific time → Retry 5 minutes later
 "2026-01-26T14:30:00.000Z" → Retry: "2026-01-26T14:35:00.000Z"
@@ -66,7 +70,7 @@ Comprehensive test suite with **53 passing tests** covering:
 ### In EntriesService
 
 ```typescript
-import { validateAntiSpam } from './utils/anti-spam.utils';
+import { validateAntiSpam } from "./utils/anti-spam.utils";
 
 class EntriesService {
   async createEntry(userId: string, data: CreateEntryDTO): Promise<EntryDTO> {
@@ -84,7 +88,7 @@ class EntriesService {
       // Validate 5-minute cooldown
       const now = new Date().toISOString();
       const validation = validateAntiSpam(lastEntry.created_at, now);
-      
+
       if (!validation.canCreate) {
         throw {
           error: "You can only create one entry every 5 minutes",
@@ -106,7 +110,7 @@ import { calculateMinutesUntilRetry } from '@/lib/utils/anti-spam.utils';
 
 function AntiSpamAlert({ retryAfter }: { retryAfter: string }) {
   const minutesLeft = calculateMinutesUntilRetry(retryAfter);
-  
+
   return (
     <Alert>
       You can create another entry in {minutesLeft} minute{minutesLeft !== 1 ? 's' : ''}.
@@ -139,31 +143,36 @@ npm run test -- anti-spam.utils.test.ts --coverage
 ## 🎓 Why These Tests Matter
 
 ### 1. **Business Critical Logic**
+
 Anti-spam is a core business rule that affects user experience and prevents abuse.
 
 ### 2. **Complex Edge Cases**
+
 Time-based calculations have many edge cases (boundaries, transitions, leap years) that are easy to get wrong.
 
 ### 3. **Pure Functions = Easy Testing**
+
 Extracted logic into pure functions makes testing fast, reliable, and independent of database state.
 
 ### 4. **Refactoring Safety**
+
 Comprehensive tests provide confidence when optimizing or refactoring anti-spam logic.
 
 ### 5. **Documentation**
+
 Tests serve as living documentation showing expected behavior in various scenarios.
 
 ## 📊 Coverage Areas
 
-| Category | Coverage |
-|----------|----------|
-| **Time Calculations** | ✅ All UTC date manipulations |
-| **5-Minute Windows** | ✅ Boundaries at exact 5-minute marks |
-| **Day Transitions** | ✅ Midnight crossings |
-| **Month Boundaries** | ✅ End of month transitions |
-| **Year Transitions** | ✅ New Year's Eve/Day |
-| **Business Rules** | ✅ 1 entry per 5 minutes enforcement |
-| **Error Cases** | ✅ Invalid scenarios with retry info |
+| Category              | Coverage                              |
+| --------------------- | ------------------------------------- |
+| **Time Calculations** | ✅ All UTC date manipulations         |
+| **5-Minute Windows**  | ✅ Boundaries at exact 5-minute marks |
+| **Day Transitions**   | ✅ Midnight crossings                 |
+| **Month Boundaries**  | ✅ End of month transitions           |
+| **Year Transitions**  | ✅ New Year's Eve/Day                 |
+| **Business Rules**    | ✅ 1 entry per 5 minutes enforcement  |
+| **Error Cases**       | ✅ Invalid scenarios with retry info  |
 
 ## 🔍 Key Insights
 
@@ -176,6 +185,7 @@ Tests serve as living documentation showing expected behavior in various scenari
 ## 🎯 Future Enhancements
 
 Potential additions:
+
 - [ ] Performance benchmarks for date calculations
 - [ ] Property-based testing with fast-check
 - [ ] Integration tests with real Supabase data
@@ -192,4 +202,3 @@ Potential additions:
 **Author**: AI Assistant  
 **Created**: 2026-01-26  
 **Test Suite**: ✅ 53/53 Passing
-

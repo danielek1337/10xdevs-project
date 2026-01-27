@@ -1,8 +1,8 @@
 /**
  * FilterBar Component
- * 
+ *
  * Advanced filtering and sorting controls for entries list.
- * 
+ *
  * Features:
  * - Sort field selector (created_at, mood, updated_at)
  * - Order selector (asc, desc)
@@ -18,21 +18,11 @@ import { useState, useEffect } from "react";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TagChip } from "./TagChip";
 import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/utils";
-import {
-  SORT_OPTIONS,
-  ORDER_OPTIONS,
-  MOOD_FILTER_OPTIONS,
-} from "@/types/dashboard.types";
+import { SORT_OPTIONS, ORDER_OPTIONS, MOOD_FILTER_OPTIONS } from "@/types/dashboard.types";
 import type { EntriesQueryParamsDTO } from "@/types";
 import type { MoodValue } from "@/types/dashboard.types";
 
@@ -47,12 +37,7 @@ interface FilterBarProps {
   className?: string;
 }
 
-export function FilterBar({
-  filters,
-  onFiltersChange,
-  onClearFilters,
-  className,
-}: FilterBarProps) {
+export function FilterBar({ filters, onFiltersChange, onClearFilters, className }: FilterBarProps) {
   // Local state for search input (before debounce)
   const [searchInput, setSearchInput] = useState(filters.search || "");
 
@@ -75,11 +60,7 @@ export function FilterBar({
     filters.order !== "desc";
 
   // Parse tags to array
-  const selectedTags = Array.isArray(filters.tag)
-    ? filters.tag
-    : filters.tag
-      ? [filters.tag]
-      : [];
+  const selectedTags = Array.isArray(filters.tag) ? filters.tag : filters.tag ? [filters.tag] : [];
 
   /**
    * Remove a tag from filters
@@ -92,12 +73,7 @@ export function FilterBar({
   };
 
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-4 p-4 rounded-lg border bg-card",
-        className
-      )}
-    >
+    <div className={cn("flex flex-col gap-4 p-4 rounded-lg border bg-card", className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -106,12 +82,7 @@ export function FilterBar({
         </div>
 
         {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClearFilters}
-            className="h-8"
-          >
+          <Button variant="ghost" size="sm" onClick={onClearFilters} className="h-8">
             <X className="size-4 mr-1" />
             Wyczyść
           </Button>
@@ -122,9 +93,7 @@ export function FilterBar({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Sort field */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            Sortuj według
-          </label>
+          <label className="text-xs font-medium text-muted-foreground">Sortuj według</label>
           <Select
             value={filters.sort || "created_at"}
             onValueChange={(value) =>
@@ -148,14 +117,10 @@ export function FilterBar({
 
         {/* Order */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            Kolejność
-          </label>
+          <label className="text-xs font-medium text-muted-foreground">Kolejność</label>
           <Select
             value={filters.order || "desc"}
-            onValueChange={(value) =>
-              onFiltersChange({ order: value as "asc" | "desc" })
-            }
+            onValueChange={(value) => onFiltersChange({ order: value as "asc" | "desc" })}
           >
             <SelectTrigger className="w-full">
               <SelectValue />
@@ -172,9 +137,7 @@ export function FilterBar({
 
         {/* Mood filter */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            Nastrój
-          </label>
+          <label className="text-xs font-medium text-muted-foreground">Nastrój</label>
           <Select
             value={filters.mood?.toString() || "all"}
             onValueChange={(value) =>
@@ -199,10 +162,7 @@ export function FilterBar({
 
         {/* Search */}
         <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="search-input"
-            className="text-xs font-medium text-muted-foreground"
-          >
+          <label htmlFor="search-input" className="text-xs font-medium text-muted-foreground">
             Szukaj
           </label>
           <div className="relative">
@@ -232,17 +192,10 @@ export function FilterBar({
       {/* Selected tags */}
       {selectedTags.length > 0 && (
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-medium text-muted-foreground">
-            Filtrowane tagi:
-          </label>
+          <label className="text-xs font-medium text-muted-foreground">Filtrowane tagi:</label>
           <div className="flex flex-wrap gap-2">
             {selectedTags.map((tag) => (
-              <TagChip
-                key={tag}
-                name={tag}
-                onRemove={handleRemoveTag}
-                variant="secondary"
-              />
+              <TagChip key={tag} name={tag} onRemove={handleRemoveTag} variant="secondary" />
             ))}
           </div>
         </div>
@@ -261,4 +214,3 @@ export function FilterBar({
     </div>
   );
 }
-
