@@ -12,9 +12,12 @@ describe("useResetTokens", () => {
   const originalLocation = window.location;
 
   beforeEach(() => {
-    // Mock window.location
-    delete (window as unknown as { location: unknown }).location;
-    window.location = { ...originalLocation, hash: "" } as Location;
+    // Mock window.location using Object.defineProperty
+    Object.defineProperty(window, "location", {
+      value: { ...originalLocation, hash: "" },
+      writable: true,
+      configurable: true,
+    });
   });
 
   afterEach(() => {
