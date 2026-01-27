@@ -1,9 +1,9 @@
 /**
  * EntryEditModal Component
- * 
+ *
  * Modal dialog for editing an existing productivity entry.
  * Reuses EntryForm component with pre-filled data.
- * 
+ *
  * Features:
  * - Dialog with form
  * - Pre-filled with entry data
@@ -15,30 +15,17 @@
  */
 
 import { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoodSelector } from "./MoodSelector";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { TagsCombobox } from "./TagsCombobox";
 import { Button } from "@/components/ui/button";
-import {
-  validateEntryForm,
-  hasValidationErrors,
-  formatAbsoluteTimestamp,
-} from "@/lib/utils/dashboard.utils";
-import type {
-  EntryFormData,
-  EntryFormErrors,
-  MoodValue,
-} from "@/types/dashboard.types";
+import { validateEntryForm, hasValidationErrors, formatAbsoluteTimestamp } from "@/lib/utils/dashboard.utils";
+import type { EntryFormData, EntryFormErrors, MoodValue } from "@/types/dashboard.types";
 import type { EntryDTO, UpdateEntryDTO } from "@/types";
 import { cn } from "@/lib/utils";
+import { getAuthToken } from "@/lib/utils/session.utils";
 
 interface EntryEditModalProps {
   /** Entry to edit, or null if modal closed */
@@ -49,11 +36,7 @@ interface EntryEditModalProps {
   onSuccess: (updatedEntry: EntryDTO) => void;
 }
 
-export function EntryEditModal({
-  entry,
-  onClose,
-  onSuccess,
-}: EntryEditModalProps) {
+export function EntryEditModal({ entry, onClose, onSuccess }: EntryEditModalProps) {
   // Form state - initialized from entry when modal opens
   const [formData, setFormData] = useState<EntryFormData>({
     mood: null,
@@ -108,9 +91,13 @@ export function EntryEditModal({
     setIsSubmitting(true);
 
     try {
+      const token = getAuthToken();
       const response = await fetch(`/api/entries/${entry.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
         body: JSON.stringify(payload),
       });
 
@@ -141,11 +128,7 @@ export function EntryEditModal({
       onClose();
     } catch (error) {
       console.error("Error updating entry:", error);
-      setServerError(
-        error instanceof Error
-          ? error.message
-          : "Wystąpił błąd podczas aktualizacji wpisu"
-      );
+      setServerError(error instanceof Error ? error.message : "Wystąpił błąd podczas aktualizacji wpisu");
     } finally {
       setIsSubmitting(false);
     }
@@ -172,9 +155,7 @@ export function EntryEditModal({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Edytuj wpis</DialogTitle>
-          <DialogDescription>
-            Wprowadź zmiany do swojego wpisu produktywności
-          </DialogDescription>
+          <DialogDescription>Wprowadź zmiany do swojego wpisu produktywności</DialogDescription>
         </DialogHeader>
 
         {/* Created at info */}
@@ -199,21 +180,14 @@ export function EntryEditModal({
           {/* Mood selector */}
           <MoodSelector
             value={formData.mood}
-            onChange={(mood: MoodValue) =>
-              setFormData((prev) => ({ ...prev, mood }))
-            }
+            onChange={(mood: MoodValue) => setFormData((prev) => ({ ...prev, mood }))}
             disabled={isSubmitting}
           />
-          {errors.mood && (
-            <p className="text-xs text-destructive -mt-2">{errors.mood}</p>
-          )}
+          {errors.mood && <p className="text-xs text-destructive -mt-2">{errors.mood}</p>}
 
           {/* Task input */}
           <div className="flex flex-col gap-2">
-            <label
-              htmlFor="edit-task-input"
-              className="text-sm font-medium leading-none"
-            >
+            <label htmlFor="edit-task-input" className="text-sm font-medium leading-none">
               Zadanie <span className="text-destructive">*</span>
             </label>
             <Input
@@ -222,18 +196,14 @@ export function EntryEditModal({
               type="text"
               placeholder="Co teraz robisz?"
               value={formData.task}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, task: e.target.value }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, task: e.target.value }))}
               onBlur={() => handleBlur("task")}
               disabled={isSubmitting}
               className={cn(errors.task && "border-destructive")}
               aria-invalid={!!errors.task}
               required
             />
-            {errors.task && (
-              <p className="text-xs text-destructive">{errors.task}</p>
-            )}
+            {errors.task && <p className="text-xs text-destructive">{errors.task}</p>}
           </div>
 
           {/* Notes textarea */}
@@ -246,9 +216,7 @@ export function EntryEditModal({
               name="notes"
               placeholder="Dodatkowe szczegóły (opcjonalne)..."
               value={formData.notes}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, notes: e.target.value }))
-              }
+              onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
               onBlur={() => handleBlur("notes")}
               disabled={isSubmitting}
               rows={3}
@@ -258,20 +226,13 @@ export function EntryEditModal({
           {/* Tags combobox */}
           <TagsCombobox
             value={formData.tags}
-            onChange={(tags: string[]) =>
-              setFormData((prev) => ({ ...prev, tags }))
-            }
+            onChange={(tags: string[]) => setFormData((prev) => ({ ...prev, tags }))}
             disabled={isSubmitting}
           />
 
           {/* Actions */}
           <div className="flex gap-2 justify-end pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               Anuluj
             </Button>
             <Button type="submit" disabled={isSubmitting}>
@@ -283,4 +244,3 @@ export function EntryEditModal({
     </Dialog>
   );
 }
-

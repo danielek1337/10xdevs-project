@@ -19,8 +19,15 @@ export const prerender = false;
 export const GET: APIRoute = async ({ params, locals }) => {
   try {
     const { supabase, user } = locals;
-    const userId = user?.id || "00000000-0000-0000-0000-000000000000";
     const { id } = params;
+
+    // Check authentication
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Unauthorized", code: "UNAUTHORIZED" } as ErrorResponseDTO), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     if (!id) {
       return new Response(JSON.stringify({ error: "Entry ID required", code: "INVALID_REQUEST" } as ErrorResponseDTO), {
@@ -28,6 +35,8 @@ export const GET: APIRoute = async ({ params, locals }) => {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    const userId = user.id;
 
     const entriesService = new EntriesService(supabase);
     const entry = await entriesService.getEntryById(id);
@@ -75,8 +84,15 @@ export const GET: APIRoute = async ({ params, locals }) => {
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
   try {
     const { supabase, user } = locals;
-    const userId = user?.id || "00000000-0000-0000-0000-000000000000";
     const { id } = params;
+
+    // Check authentication
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Unauthorized", code: "UNAUTHORIZED" } as ErrorResponseDTO), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     if (!id) {
       return new Response(JSON.stringify({ error: "Entry ID required", code: "INVALID_REQUEST" } as ErrorResponseDTO), {
@@ -84,6 +100,8 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    const userId = user.id;
 
     // Parse request body
     let body: UpdateEntryDTO;
@@ -152,8 +170,15 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 export const DELETE: APIRoute = async ({ params, locals }) => {
   try {
     const { supabase, user } = locals;
-    const userId = user?.id || "00000000-0000-0000-0000-000000000000";
     const { id } = params;
+
+    // Check authentication
+    if (!user) {
+      return new Response(JSON.stringify({ error: "Unauthorized", code: "UNAUTHORIZED" } as ErrorResponseDTO), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
 
     if (!id) {
       return new Response(JSON.stringify({ error: "Entry ID required", code: "INVALID_REQUEST" } as ErrorResponseDTO), {
@@ -161,6 +186,8 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
         headers: { "Content-Type": "application/json" },
       });
     }
+
+    const userId = user.id;
 
     const entriesService = new EntriesService(supabase);
     await entriesService.deleteEntry(userId, id);

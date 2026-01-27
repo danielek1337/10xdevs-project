@@ -32,7 +32,21 @@ export const GET: APIRoute = async ({ url, locals }) => {
   try {
     // Step 1: Authentication check
     const { supabase, user } = locals;
-    const userId = user?.id || "00000000-0000-0000-0000-000000000000"; // Mock user for testing
+
+    if (!user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          code: "UNAUTHORIZED",
+        } as ErrorResponseDTO),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const userId = user.id;
 
     // Step 2: Parse query parameters
     const params = url.searchParams;
@@ -117,23 +131,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Step 1: Authentication check
     const { supabase, user } = locals;
 
-    // TODO: Re-enable authentication after implementing login endpoint
-    // For now, use a test user_id to allow testing without auth
-    const userId = user?.id || "00000000-0000-0000-0000-000000000000"; // Mock user for testing
+    if (!user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          code: "UNAUTHORIZED",
+        } as ErrorResponseDTO),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
 
-    // COMMENTED OUT: Will re-enable after auth implementation
-    // if (!user) {
-    //   return new Response(
-    //     JSON.stringify({
-    //       error: "Unauthorized",
-    //       code: "UNAUTHORIZED",
-    //     } as ErrorResponseDTO),
-    //     {
-    //       status: 401,
-    //       headers: { "Content-Type": "application/json" },
-    //     }
-    //   );
-    // }
+    const userId = user.id;
 
     // Step 2: Parse request body
     let body: unknown;

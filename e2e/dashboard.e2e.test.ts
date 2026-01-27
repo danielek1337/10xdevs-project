@@ -27,6 +27,9 @@ const TEST_USER = {
 };
 
 test.describe("Dashboard - Complete User Journey", () => {
+  // Run tests serially to avoid data conflicts between parallel tests
+  test.describe.configure({ mode: "serial" });
+
   let dashboardPage: DashboardPage;
   let loginPage: LoginPage;
 
@@ -72,6 +75,9 @@ test.describe("Dashboard - Complete User Journey", () => {
 });
 
 test.describe("Dashboard - Entry Creation", () => {
+  // Run tests serially to avoid anti-spam conflicts between parallel tests
+  test.describe.configure({ mode: "serial" });
+
   let dashboardPage: DashboardPage;
   let loginPage: LoginPage;
 
@@ -88,7 +94,7 @@ test.describe("Dashboard - Entry Creation", () => {
     await dashboardPage.waitForPageLoad();
   });
 
-  test("should create a new entry successfully", async () => {
+  test("should create a new entry successfully", async ({ page }) => {
     // Arrange
     const newEntry = {
       mood: 4 as const,
@@ -99,6 +105,9 @@ test.describe("Dashboard - Entry Creation", () => {
 
     // Act - Create entry
     await dashboardPage.createEntry(newEntry);
+
+    // Wait for the entry to appear (or empty state to disappear)
+    await page.waitForTimeout(2000);
 
     // Assert - Entry should appear in the list
     const hasEntry = await dashboardPage.hasEntryWithTask(newEntry.task);
@@ -131,15 +140,31 @@ test.describe("Dashboard - Entry Creation", () => {
     expect(hasEntry).toBe(true);
   });
 
-  test("should display anti-spam alert after creating an entry", async () => {
-    // Arrange
-    const entry = {
+  test("should display anti-spam alert after creating an entry", async ({ page }) => {
+    // Arrange - First entry
+    const firstEntry = {
       mood: 5 as const,
-      task: `Anti-spam Test ${Date.now()}`,
+      task: `Anti-spam Test First ${Date.now()}`,
     };
 
-    // Act - Create first entry
-    await dashboardPage.createEntry(entry);
+    // Act - Create first entry successfully
+    await dashboardPage.createEntry(firstEntry);
+    await page.waitForTimeout(1000);
+
+    // Arrange - Second entry (should trigger anti-spam)
+    const secondEntry = {
+      mood: 4 as const,
+      task: `Anti-spam Test Second ${Date.now()}`,
+    };
+
+    // Act - Try to create second entry immediately (should fail with anti-spam)
+    // Fill the form fields but don't use createEntry method (which waits for success)
+    await dashboardPage.moodButton(secondEntry.mood).click();
+    await dashboardPage.taskInput.fill(secondEntry.task);
+    await dashboardPage.submitButton.click();
+
+    // Wait for anti-spam alert to appear
+    await page.waitForTimeout(2000);
 
     // Assert - Anti-spam alert should be visible
     const isAntiSpamVisible = await dashboardPage.isAntiSpamAlertDisplayed();
@@ -148,6 +173,9 @@ test.describe("Dashboard - Entry Creation", () => {
 });
 
 test.describe("Dashboard - Entry Management", () => {
+  // Run tests serially to avoid anti-spam conflicts between parallel tests
+  test.describe.configure({ mode: "serial" });
+
   let dashboardPage: DashboardPage;
   let loginPage: LoginPage;
   let testEntryTask: string;
@@ -173,7 +201,19 @@ test.describe("Dashboard - Entry Management", () => {
       notes: "Original notes",
     });
 
-    // Wait for entry to appear
+    // Wait for entry to be fully persisted and rendered
+    await page.waitForTimeout(2000);
+
+    // Verify the entry exists in the DOM before proceeding
+    const entryExists = await dashboardPage.hasEntryWithTask(testEntryTask);
+    if (!entryExists) {
+      throw new Error(`Failed to create test entry: ${testEntryTask}`);
+    }
+
+    // Reload the page to ensure fresh state from database
+    // This prevents issues where React state might have stale entries
+    await page.reload();
+    await dashboardPage.waitForPageLoad();
     await page.waitForTimeout(1000);
   });
 
@@ -231,8 +271,13 @@ test.describe("Dashboard - Entry Management", () => {
     }
 
     // Act - Click delete but then cancel
+    // Click actions button to open dropdown
     await dashboardPage.firstEntryDeleteButton.click();
+    // Click "Usuń" (Delete) menu item
+    await dashboardPage.page.getByRole("menuitem", { name: /usuń|delete/i }).click();
+    // Wait for confirmation dialog
     await dashboardPage.deleteConfirmationDialog.waitFor({ state: "visible" });
+    // Cancel the deletion
     await dashboardPage.deleteCancelButton.click();
 
     // Assert - Entry count should remain the same
@@ -242,6 +287,9 @@ test.describe("Dashboard - Entry Management", () => {
 });
 
 test.describe("Dashboard - Filtering and Search", () => {
+  // Run tests serially to avoid anti-spam conflicts between parallel tests
+  test.describe.configure({ mode: "serial" });
+
   let dashboardPage: DashboardPage;
   let loginPage: LoginPage;
 
@@ -314,6 +362,9 @@ test.describe("Dashboard - Filtering and Search", () => {
 });
 
 test.describe("Dashboard - Empty States", () => {
+  // Run tests serially to ensure clean empty state for each test
+  test.describe.configure({ mode: "serial" });
+
   let dashboardPage: DashboardPage;
   let loginPage: LoginPage;
 

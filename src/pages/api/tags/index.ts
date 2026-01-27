@@ -21,8 +21,21 @@ export const prerender = false;
  */
 export const GET: APIRoute = async ({ url, locals }) => {
   try {
-    const { supabase } = locals;
+    const { supabase, user } = locals;
+    
     // Note: Tags are global, not user-specific, but we still check auth
+    if (!user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          code: "UNAUTHORIZED",
+        } as ErrorResponseDTO),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Parse query parameters
     const params = url.searchParams;

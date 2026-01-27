@@ -22,7 +22,21 @@ export const prerender = false;
 export const GET: APIRoute = async ({ url, locals }) => {
   try {
     const { supabase, user } = locals;
-    const userId = user?.id || "00000000-0000-0000-0000-000000000000";
+
+    if (!user) {
+      return new Response(
+        JSON.stringify({
+          error: "Unauthorized",
+          code: "UNAUTHORIZED",
+        } as ErrorResponseDTO),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    const userId = user.id;
 
     // Parse query parameters
     const params = url.searchParams;

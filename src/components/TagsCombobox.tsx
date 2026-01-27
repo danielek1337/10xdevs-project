@@ -19,6 +19,7 @@ import { TagChip } from "./TagChip";
 import { useDebounce } from "@/hooks/useDebounce";
 import { validateTagName } from "@/lib/utils/dashboard.utils";
 import { cn } from "@/lib/utils";
+import { getAuthToken } from "@/lib/utils/session.utils";
 import type { TagDTO } from "@/types";
 
 interface TagsComboboxProps {
@@ -50,7 +51,10 @@ export function TagsCombobox({ value, onChange, disabled = false, className }: T
     const fetchSuggestions = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/tags?search=${encodeURIComponent(debouncedSearch)}&limit=10`);
+        const token = getAuthToken();
+        const response = await fetch(`/api/tags?search=${encodeURIComponent(debouncedSearch)}&limit=10`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
 
         if (response.ok) {
           const data = await response.json();

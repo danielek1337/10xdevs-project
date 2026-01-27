@@ -99,11 +99,12 @@ export class DashboardPage extends BasePage {
     this.moodButton = (mood: 1 | 2 | 3 | 4 | 5) => page.getByRole("radio", { name: new RegExp(`^${mood}\\s*-`, "i") });
     this.taskInput = page.locator("#task-input");
     this.notesTextarea = page.locator("#notes-input");
-    this.tagsCombobox = page
-      .locator('[data-testid="tags-combobox"]')
-      .or(page.locator('input[placeholder*="tag"]').or(page.getByRole("combobox", { name: /tags/i })));
+    this.tagsCombobox = page.locator("#tags-input");
     this.submitButton = this.entryForm.getByRole("button", { name: /create|utwórz/i });
-    this.antiSpamAlert = page.locator('[role="alert"]').filter({ hasText: /anti-spam|czekaj|wait/i });
+    // Anti-spam alert contains Polish text: "Limit wpisów osiągnięty" or "1 wpis co 5 minut"
+    this.antiSpamAlert = page.locator('[role="alert"]').filter({
+      hasText: /limit wpisów|1 wpis co 5 minut|entry every 5 minutes/i,
+    });
 
     // Filter Bar
     this.searchInput = page.locator('input[placeholder*="search"]').or(page.locator('input[placeholder*="szukaj"]'));
@@ -125,9 +126,10 @@ export class DashboardPage extends BasePage {
         .filter({ has: page.locator('[data-testid="entry-card"]') })
         .first()
     );
-    this.entryCards = page
-      .locator('[data-testid="entry-card"]')
-      .or(page.locator('article, [role="article"]').filter({ has: page.locator('button[aria-label*="edit"]') }));
+    // Entry cards are <article> elements with a heading (task title)
+    this.entryCards = page.locator("article").filter({
+      has: page.locator("h3"),
+    });
     this.emptyState = page
       .locator('[data-testid="empty-state"]')
       .or(page.locator("div").filter({ hasText: /no entries|brak wpisów/i }));
@@ -136,12 +138,9 @@ export class DashboardPage extends BasePage {
 
     // First Entry Card
     this.firstEntryCard = this.entryCards.first();
-    this.firstEntryEditButton = this.firstEntryCard
-      .getByRole("button", { name: /edit|edytuj/i })
-      .or(this.firstEntryCard.locator('button[aria-label*="edit"]'));
-    this.firstEntryDeleteButton = this.firstEntryCard
-      .getByRole("button", { name: /delete|usuń/i })
-      .or(this.firstEntryCard.locator('button[aria-label*="delete"]'));
+    // The actions button triggers a dropdown menu with edit/delete options
+    this.firstEntryEditButton = this.firstEntryCard.getByRole("button", { name: /akcje|actions/i });
+    this.firstEntryDeleteButton = this.firstEntryCard.getByRole("button", { name: /akcje|actions/i });
 
     // Pagination
     this.pagination = page
@@ -197,24 +196,49 @@ export class DashboardPage extends BasePage {
       }
     }
 
+    // Wait for the API call to /api/entries
+    const responsePromise = this.page.waitForResponse(
+      (response) => response.url().includes("/api/entries") && response.request().method() === "POST",
+      { timeout: 10000 }
+    );
+
     // Submit form
     await this.submitButton.click();
 
-    // Wait for the entry to appear in the list or for an error
-    // This ensures the entry was successfully created before continuing
+    // Wait for the API response
+    try {
+      const response = await responsePromise;
+      const status = response.status();
+
+      // If not successful, log the error
+      if (status !== 201) {
+        // eslint-disable-next-line no-console
+        console.error(`Entry creation failed with status ${status}`);
+        const body = await response.text();
+        // eslint-disable-next-line no-console
+        console.error(`Response body: ${body}`);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Failed to wait for entry creation API call:", error);
+    }
+
+    // Wait for the entry to appear in the list
+    await this.page.waitForTimeout(1500);
+
+    // Additional wait: ensure empty state is gone if entry was created
     try {
       await this.page.waitForFunction(
-        (taskText) => {
+        () => {
+          const emptyState = document.querySelector('[data-testid="empty-state"]');
           const entryCards = document.querySelectorAll('[data-testid="entry-card"], article');
-          return Array.from(entryCards).some((card) => card.textContent?.includes(taskText));
+          return !emptyState || entryCards.length > 0;
         },
-        options.task,
-        { timeout: 5000 }
+        { timeout: 3000 }
       );
     } catch {
-      // If entry doesn't appear, wait a bit longer and continue
-      // (might be shown on dashboard with empty state removed)
-      await this.page.waitForTimeout(1000);
+      // Continue even if this check fails
+      await this.page.waitForTimeout(500);
     }
   }
 
@@ -222,9 +246,22 @@ export class DashboardPage extends BasePage {
    * Add a tag to the entry form
    */
   async addTag(tag: string): Promise<void> {
+    // Fill the tag input
     await this.tagsCombobox.click();
     await this.tagsCombobox.fill(tag);
+
+    // Press Enter to add the tag
     await this.page.keyboard.press("Enter");
+
+    // Wait for the tag chip to appear
+    await this.page.waitForTimeout(300);
+
+    // Verify the tag was added by checking for the tag chip
+    const tagChip = this.page.locator(`button[aria-label*="Usuń tag ${tag}"]`).or(this.page.getByText(tag).first());
+    await tagChip.waitFor({ state: "visible", timeout: 2000 }).catch(() => {
+      // eslint-disable-next-line no-console
+      console.warn(`Tag "${tag}" may not have been added successfully`);
+    });
   }
 
   /**
@@ -267,11 +304,17 @@ export class DashboardPage extends BasePage {
    * Edit the first entry in the list
    */
   async editFirstEntry(updates: Partial<CreateEntryOptions>): Promise<void> {
-    // Click edit button
+    // Click actions button to open dropdown
     await this.firstEntryEditButton.click();
+
+    // Click "Edytuj" (Edit) menu item
+    await this.page.getByRole("menuitem", { name: /edytuj|edit/i }).click();
 
     // Wait for modal to open
     await this.editModal.waitFor({ state: "visible" });
+
+    // Wait a bit for the entry data to load into the modal
+    await this.page.waitForTimeout(500);
 
     // Update fields if provided
     if (updates.mood) {
@@ -292,19 +335,39 @@ export class DashboardPage extends BasePage {
       await notesTextarea.fill(updates.notes);
     }
 
+    // Wait for the PATCH request to complete
+    const responsePromise = this.page.waitForResponse(
+      (response) => response.url().includes("/api/entries/") && response.request().method() === "PATCH",
+      { timeout: 10000 }
+    );
+
     // Save changes
     await this.editModalSaveButton.click();
 
+    // Wait for the API response
+    const response = await responsePromise;
+
+    // Check if the request was successful
+    if (!response.ok()) {
+      throw new Error(`Failed to update entry: ${response.status()} ${response.statusText()}`);
+    }
+
     // Wait for modal to close
     await this.editModal.waitFor({ state: "hidden" });
+
+    // Wait for UI to update
+    await this.page.waitForTimeout(1000);
   }
 
   /**
    * Delete the first entry in the list
    */
   async deleteFirstEntry(): Promise<void> {
-    // Click delete button
+    // Click actions button to open dropdown
     await this.firstEntryDeleteButton.click();
+
+    // Click "Usuń" (Delete) menu item
+    await this.page.getByRole("menuitem", { name: /usuń|delete/i }).click();
 
     // Wait for confirmation dialog
     await this.deleteConfirmationDialog.waitFor({ state: "visible" });
