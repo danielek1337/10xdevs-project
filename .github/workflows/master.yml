@@ -1,0 +1,159 @@
+name: CI/CD Pipeline
+
+# Workflow uruchamia się:
+# - Manualnie przez zakładkę Actions w GitHub
+# - Automatycznie po każdym pushu do brancha master
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch: # Umożliwia manualne uruchomienie
+
+# Uprawnienia dla GITHUB_TOKEN
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  test-and-build:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    env:
+      NODE_VERSION: '22.14.0'
+      CI: true
+    
+    steps:
+      # 1. Checkout kodu z repozytorium
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Setup Node.js z cache dla npm (wersja z .nvmrc)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      # 3. Instalacja zależności projektu
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. Sprawdzenie kompilacji TypeScript
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      # 5. Sprawdzenie kodu za pomocą ESLint
+      - name: Lint code
+        run: npm run lint
+
+      # 6. Uruchomienie testów jednostkowych (Vitest)
+      - name: Run unit tests
+        run: npm run test:unit
+        env:
+          CI: true
+
+      # 7. Setup Supabase CLI dla testów E2E
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # 8. Start lokalnej instancji Supabase
+      - name: Start Supabase local
+        run: supabase start
+
+      # 9. Ustawienie zmiennych środowiskowych dla testów E2E
+      - name: Set E2E environment variables
+        run: |
+          echo "PUBLIC_SUPABASE_URL=http://127.0.0.1:54321" >> $GITHUB_ENV
+          ANON_KEY=$(supabase status -o env | grep ANON_KEY | cut -d '=' -f2)
+          SERVICE_KEY=$(supabase status -o env | grep SERVICE_ROLE_KEY | cut -d '=' -f2)
+          echo "SUPABASE_KEY=$ANON_KEY" >> $GITHUB_ENV
+          echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_KEY" >> $GITHUB_ENV
+          echo "✅ Environment variables set successfully"
+
+      # 10. Cache Playwright browsers
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      # 11. Instalacja przeglądarki Chromium dla Playwright
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npm run playwright:install
+
+      # 12. Uruchomienie testów E2E (Playwright)
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          CI: true
+
+      # 13. Upload artefaktów Playwright przy failurze
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_number }}
+          path: |
+            playwright-report/
+            playwright-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      # 14. Budowanie aplikacji w wersji produkcyjnej
+      - name: Build production
+        run: npm run build
+        env:
+          # Dummy credentials dla procesu budowania
+          # W prawdziwym deploymencie użyj GitHub Secrets
+          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL || 'http://dummy-url.com' }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY || 'dummy-key' }}
+
+      # 15. Upload build artifacts (opcjonalnie)
+      - name: Upload build artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ github.run_number }}
+          path: dist/
+          retention-days: 3
+          if-no-files-found: error
+
+      # 16. Stop Supabase po testach
+      - name: Stop Supabase local
+        if: always()
+        run: supabase stop --no-backup
+
+  # Job summary
+  summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: test-and-build
+    if: always()
+    steps:
+      - name: Generate pipeline summary
+        run: |
+          echo "### CI/CD Pipeline Results 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Workflow:** \`${{ github.workflow }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| TypeScript | ${{ needs.test-and-build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ESLint | ${{ needs.test-and-build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | ${{ needs.test-and-build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Tests | ${{ needs.test-and-build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Production Build | ${{ needs.test-and-build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Overall Result:** ${{ needs.test-and-build.result == 'success' && '✅ Success' || '❌ Failure' }}" >> $GITHUB_STEP_SUMMARY
+
