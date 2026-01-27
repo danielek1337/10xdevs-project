@@ -41,12 +41,6 @@ export class TagsService {
       .in("name", uniqueTagNames);
 
     if (selectError) {
-      console.error("❌ Supabase Error Details:", {
-        message: selectError.message,
-        code: selectError.code,
-        details: selectError.details,
-        hint: selectError.hint,
-      });
       throw new Error(`Failed to fetch tags: ${selectError.message}`);
     }
 

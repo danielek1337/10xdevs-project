@@ -4,8 +4,8 @@
  * Tests authentication API hooks with MSW for API mocking
  */
 
-import { renderHook, act, waitFor } from "@testing-library/react";
-import { describe, it, expect, beforeEach } from "vitest";
+import { renderHook, act } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/msw-setup";
 import { useLogin, useSignup, useForgotPassword, useResetPassword } from "../useAuth";
@@ -45,7 +45,7 @@ describe("useLogin", () => {
           password: "wrong",
           rememberMe: false,
         });
-      } catch (error) {
+      } catch {
         // Expected to throw
       }
     });
@@ -70,7 +70,7 @@ describe("useLogin", () => {
           password: "wrong",
           rememberMe: false,
         });
-      } catch (error) {
+      } catch {
         // Expected to throw
       }
     });
@@ -118,7 +118,7 @@ describe("useSignup", () => {
           email: "existing@example.com",
           password: "Password123",
         });
-      } catch (error) {
+      } catch {
         // Expected to throw
       }
     });
@@ -155,7 +155,7 @@ describe("useForgotPassword", () => {
     await act(async () => {
       try {
         await result.current.sendResetEmail("test@example.com");
-      } catch (error) {
+      } catch {
         // Expected to throw
       }
     });
@@ -192,7 +192,7 @@ describe("useResetPassword", () => {
     await act(async () => {
       try {
         await result.current.resetPassword("invalid-token", "NewPassword123");
-      } catch (error) {
+      } catch {
         // Expected to throw
       }
     });

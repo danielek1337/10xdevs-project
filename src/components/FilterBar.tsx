@@ -24,7 +24,6 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { cn } from "@/lib/utils";
 import { SORT_OPTIONS, ORDER_OPTIONS, MOOD_FILTER_OPTIONS } from "@/types/dashboard.types";
 import type { EntriesQueryParamsDTO } from "@/types";
-import type { MoodValue } from "@/types/dashboard.types";
 
 interface FilterBarProps {
   /** Current filters state */
@@ -93,7 +92,9 @@ export function FilterBar({ filters, onFiltersChange, onClearFilters, className 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Sort field */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Sortuj według</label>
+          <label htmlFor="sort-select" className="text-xs font-medium text-muted-foreground">
+            Sortuj według
+          </label>
           <Select
             value={filters.sort || "created_at"}
             onValueChange={(value) =>
@@ -102,7 +103,7 @@ export function FilterBar({ filters, onFiltersChange, onClearFilters, className 
               })
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger id="sort-select" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -117,12 +118,14 @@ export function FilterBar({ filters, onFiltersChange, onClearFilters, className 
 
         {/* Order */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Kolejność</label>
+          <label htmlFor="order-select" className="text-xs font-medium text-muted-foreground">
+            Kolejność
+          </label>
           <Select
             value={filters.order || "desc"}
             onValueChange={(value) => onFiltersChange({ order: value as "asc" | "desc" })}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger id="order-select" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -137,7 +140,9 @@ export function FilterBar({ filters, onFiltersChange, onClearFilters, className 
 
         {/* Mood filter */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Nastrój</label>
+          <label htmlFor="mood-select" className="text-xs font-medium text-muted-foreground">
+            Nastrój
+          </label>
           <Select
             value={filters.mood?.toString() || "all"}
             onValueChange={(value) =>
@@ -146,7 +151,7 @@ export function FilterBar({ filters, onFiltersChange, onClearFilters, className 
               })
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger id="mood-select" className="w-full">
               <SelectValue placeholder="Wszystkie" />
             </SelectTrigger>
             <SelectContent>
@@ -192,7 +197,7 @@ export function FilterBar({ filters, onFiltersChange, onClearFilters, className 
       {/* Selected tags */}
       {selectedTags.length > 0 && (
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-medium text-muted-foreground">Filtrowane tagi:</label>
+          <span className="text-xs font-medium text-muted-foreground">Filtrowane tagi:</span>
           <div className="flex flex-wrap gap-2">
             {selectedTags.map((tag) => (
               <TagChip key={tag} name={tag} onRemove={handleRemoveTag} variant="secondary" />

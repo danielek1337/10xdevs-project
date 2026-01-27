@@ -16,10 +16,21 @@ const API_BASE = "/api";
  * Add handlers for your API endpoints here.
  * Each handler intercepts a specific endpoint and returns mock data.
  */
+interface AuthRequestBody {
+  email: string;
+  password: string;
+}
+
+interface EntryRequestBody {
+  mood: number;
+  task: string;
+  tags?: string[];
+}
+
 export const handlers = [
   // Auth: Login
   http.post(`${API_BASE}/auth/login`, async ({ request }) => {
-    const body: any = await request.json();
+    const body = (await request.json()) as AuthRequestBody;
 
     if (body.email === "test@example.com" && body.password === "Password123") {
       return HttpResponse.json({
@@ -44,7 +55,7 @@ export const handlers = [
 
   // Auth: Signup
   http.post(`${API_BASE}/auth/signup`, async ({ request }) => {
-    const body: any = await request.json();
+    const body = (await request.json()) as AuthRequestBody;
 
     if (body.email === "existing@example.com") {
       return HttpResponse.json({ error: "Email already exists" }, { status: 400 });
@@ -69,7 +80,7 @@ export const handlers = [
 
   // Auth: Forgot Password
   http.post(`${API_BASE}/auth/forgot-password`, async ({ request }) => {
-    const body: any = await request.json();
+    const body = (await request.json()) as { email: string };
 
     return HttpResponse.json({
       message: `Password reset link sent to ${body.email}`,
@@ -112,7 +123,7 @@ export const handlers = [
 
   // Example: Mock POST /api/entries
   http.post(`${API_BASE}/entries`, async ({ request }) => {
-    const body: any = await request.json();
+    const body = (await request.json()) as EntryRequestBody;
     return HttpResponse.json(
       {
         data: {

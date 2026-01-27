@@ -97,7 +97,9 @@ export default function ForgotPasswordView() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Forgot Password?</CardTitle>
-          <CardDescription>Enter your email address and we'll send you a link to reset your password</CardDescription>
+          <CardDescription>
+            Enter your email address and we&apos;ll send you a link to reset your password
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>

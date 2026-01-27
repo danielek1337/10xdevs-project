@@ -124,8 +124,8 @@ export class EntriesService {
     const now = new Date().toISOString();
     const validation = validateAntiSpam(lastEntry.created_at, now);
 
-    if (!validation.canCreate) {
-      throw this.buildAntiSpamError(lastEntry.created_at, validation.retryAfter!);
+    if (!validation.canCreate && validation.retryAfter) {
+      throw this.buildAntiSpamError(lastEntry.created_at, validation.retryAfter);
     }
   }
 

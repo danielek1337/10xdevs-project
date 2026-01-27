@@ -78,9 +78,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         headers: { "Content-Type": "application/json" },
       }
     );
-  } catch (error: unknown) {
-    console.error("Reset password error:", error);
-
+  } catch {
     return new Response(
       JSON.stringify({
         error: "Internal server error",

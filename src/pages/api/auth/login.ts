@@ -70,9 +70,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Map Supabase User to UserDTO
+    if (!data.user.email) {
+      throw new Error("User email is missing");
+    }
+
     const userDTO: UserDTO = {
       id: data.user.id,
-      email: data.user.email!,
+      email: data.user.email,
       createdAt: data.user.created_at,
     };
 
@@ -92,9 +96,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error: unknown) {
-    console.error("Login error:", error);
-
+  } catch {
     return new Response(
       JSON.stringify({
         error: "Internal server error",

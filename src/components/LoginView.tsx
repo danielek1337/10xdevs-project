@@ -13,7 +13,8 @@
  * - Accessibility (ARIA labels, error announcements)
  */
 
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -56,17 +57,25 @@ export default function LoginView({ redirectTo = "/dashboard" }: LoginViewProps)
 
   // Login API hook
   const { login, isLoading, error } = useLogin();
+  const [loginSuccess, setLoginSuccess] = useState(false);
 
   // Form submit handler
   const onSubmit = async (data: LoginFormData) => {
     try {
       await login(data);
-      // Redirect to dashboard or specified URL
-      window.location.href = redirectTo;
-    } catch (error) {
+      // Mark login as successful, redirect will happen in useEffect
+      setLoginSuccess(true);
+    } catch {
       // Error is already handled by useLogin hook
     }
   };
+
+  // Handle redirect after successful login
+  useEffect(() => {
+    if (loginSuccess) {
+      window.location.href = redirectTo;
+    }
+  }, [loginSuccess, redirectTo]);
 
   const isLoggingIn = isSubmitting || isLoading;
 

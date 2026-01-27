@@ -113,7 +113,7 @@ export function PasswordStrengthIndicator({ password, className }: PasswordStren
       </div>
 
       {/* Requirements checklist */}
-      <ul className="flex flex-col gap-1 text-xs" role="list">
+      <ul className="flex flex-col gap-1 text-xs">
         {PASSWORD_REQUIREMENTS.map((requirement, index) => {
           const isMet = requirement.test(password);
           return (

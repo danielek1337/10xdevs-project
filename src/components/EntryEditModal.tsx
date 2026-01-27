@@ -61,7 +61,7 @@ export function EntryEditModal({ entry, onClose, onSuccess }: EntryEditModalProp
       setErrors({});
       setServerError(null);
     }
-  }, [entry?.id]); // Only re-run when entry ID changes
+  }, [entry]); // Only re-run when entry changes
 
   /**
    * Handle form submission
@@ -81,8 +81,13 @@ export function EntryEditModal({ entry, onClose, onSuccess }: EntryEditModalProp
     }
 
     // Prepare API payload (only changed fields)
+    if (!formData.mood) {
+      setErrors({ mood: "Mood is required" });
+      return;
+    }
+
     const payload: UpdateEntryDTO = {
-      mood: formData.mood!,
+      mood: formData.mood,
       task: formData.task.trim(),
       notes: formData.notes.trim() || undefined,
       tags: formData.tags.length > 0 ? formData.tags : undefined,
@@ -126,9 +131,8 @@ export function EntryEditModal({ entry, onClose, onSuccess }: EntryEditModalProp
       // Success
       onSuccess(updatedEntry);
       onClose();
-    } catch (error) {
-      console.error("Error updating entry:", error);
-      setServerError(error instanceof Error ? error.message : "Wystąpił błąd podczas aktualizacji wpisu");
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : "Wystąpił błąd podczas aktualizacji wpisu");
     } finally {
       setIsSubmitting(false);
     }
@@ -143,9 +147,9 @@ export function EntryEditModal({ entry, onClose, onSuccess }: EntryEditModalProp
       setErrors((prev) => ({ ...prev, [field]: validationErrors[field] }));
     } else {
       setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [field]: _, ...rest } = prev;
+        return rest;
       });
     }
   };

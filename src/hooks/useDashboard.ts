@@ -98,8 +98,7 @@ export function useDashboard() {
 
       const user: UserDTO = await response.json();
       setState((prev) => ({ ...prev, user }));
-    } catch (error) {
-      console.error("Error fetching user:", error);
+    } catch {
       // If fetching user fails, redirect to login
       window.location.href = "/login";
     }

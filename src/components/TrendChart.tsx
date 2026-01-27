@@ -22,15 +22,24 @@ interface TrendChartProps {
   height?: number;
 }
 
+interface TooltipPayload {
+  payload: FocusScoreDTO;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+}
+
 /**
  * Custom tooltip for the chart
  */
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload }: CustomTooltipProps) {
   if (!active || !payload || !payload.length) {
     return null;
   }
 
-  const data = payload[0].payload as FocusScoreDTO;
+  const data = payload[0].payload;
 
   return (
     <div className="rounded-lg border bg-popover p-3 shadow-md">

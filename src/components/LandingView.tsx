@@ -94,7 +94,7 @@ export default function LandingView() {
             </div>
             <h3 className="text-xl font-semibold text-white mb-2">Productivity Insights</h3>
             <p className="text-blue-100">
-              Visualize your trends with charts and understand when you're most productive.
+              Visualize your trends with charts and understand when you&apos;re most productive.
             </p>
           </div>
         </div>

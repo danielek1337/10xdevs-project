@@ -56,8 +56,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Don't reveal if email exists (always return success)
     // Supabase won't send email if account doesn't exist
     if (error) {
-      console.error("Password reset error:", error);
-      // Still return success to user for security
+      // Silent fail - still return success to user for security
     }
 
     return new Response(
@@ -69,9 +68,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         headers: { "Content-Type": "application/json" },
       }
     );
-  } catch (error: unknown) {
-    console.error("Forgot password error:", error);
-
+  } catch {
     return new Response(
       JSON.stringify({
         error: "Internal server error",

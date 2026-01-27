@@ -109,7 +109,7 @@ export function useSignup() {
     const result = await mutate(data);
 
     // Check if email confirmation is required
-    if ((result as any).requiresEmailConfirmation) {
+    if ("requiresEmailConfirmation" in result && result.requiresEmailConfirmation) {
       return { ...result, requiresEmailConfirmation: true };
     }
 

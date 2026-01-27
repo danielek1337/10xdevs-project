@@ -1,7 +1,7 @@
 /**
  * Anti-Spam Utilities - Unit Tests
  *
- * Tests for business logic enforcing the "1 entry per hour per user" rule.
+ * Tests for business logic enforcing the "1 entry per 5 minutes per user" rule.
  * All calculations are performed in UTC timezone.
  */
 
@@ -13,160 +13,80 @@ import {
   validateAntiSpam,
 } from "./anti-spam.utils";
 
-/**
- * Helper function for tests: Calculate hour bucket (start of hour) in UTC
- * This is used for testing hour-based anti-spam logic
- */
-function calculateHourBucketUtc(timestamp: Date): string {
-  const bucket = new Date(timestamp);
-  bucket.setUTCMinutes(0, 0, 0);
-  return bucket.toISOString();
-}
-
-describe("calculateHourBucketUtc", () => {
-  describe("Basic hour bucket calculation", () => {
-    it("should truncate timestamp to hour start", () => {
-      const input = new Date("2026-01-26T14:35:22.123Z");
-      const result = calculateHourBucketUtc(input);
-      expect(result).toBe("2026-01-26T14:00:00.000Z");
-    });
-
-    it("should handle timestamp already at hour start", () => {
-      const input = new Date("2026-01-26T14:00:00.000Z");
-      const result = calculateHourBucketUtc(input);
-      expect(result).toBe("2026-01-26T14:00:00.000Z");
-    });
-
-    it("should handle last second of the hour", () => {
-      const input = new Date("2026-01-26T14:59:59.999Z");
-      const result = calculateHourBucketUtc(input);
-      expect(result).toBe("2026-01-26T14:00:00.000Z");
-    });
-  });
-
-  describe("Edge cases - Time boundaries", () => {
-    it("should handle midnight (00:00)", () => {
-      const input = new Date("2026-01-26T00:30:00.000Z");
-      const result = calculateHourBucketUtc(input);
-      expect(result).toBe("2026-01-26T00:00:00.000Z");
-    });
-
-    it("should handle last hour of the day (23:xx)", () => {
-      const input = new Date("2026-01-26T23:45:30.000Z");
-      const result = calculateHourBucketUtc(input);
-      expect(result).toBe("2026-01-26T23:00:00.000Z");
-    });
-
-    it("should handle day transition (23:59:59.999)", () => {
-      const input = new Date("2026-01-26T23:59:59.999Z");
-      const result = calculateHourBucketUtc(input);
-      expect(result).toBe("2026-01-26T23:00:00.000Z");
-    });
-
-    it("should handle first moment of new day (00:00:00.000)", () => {
-      const input = new Date("2026-01-27T00:00:00.000Z");
-      const result = calculateHourBucketUtc(input);
-      expect(result).toBe("2026-01-27T00:00:00.000Z");
-    });
-  });
-
-  describe("Edge cases - Month and year boundaries", () => {
-    it("should handle last day of month", () => {
-      const input = new Date("2026-01-31T23:30:00.000Z");
-      const result = calculateHourBucketUtc(input);
-      expect(result).toBe("2026-01-31T23:00:00.000Z");
-    });
-
-    it("should handle first day of month", () => {
-      const input = new Date("2026-02-01T00:30:00.000Z");
-      const result = calculateHourBucketUtc(input);
-      expect(result).toBe("2026-02-01T00:00:00.000Z");
-    });
-
-    it("should handle leap year February 29", () => {
-      const input = new Date("2024-02-29T12:30:00.000Z"); // 2024 is leap year
-      const result = calculateHourBucketUtc(input);
-      expect(result).toBe("2024-02-29T12:00:00.000Z");
-    });
-
-    it("should handle year transition (New Year's Eve)", () => {
-      const input = new Date("2026-12-31T23:59:59.999Z");
-      const result = calculateHourBucketUtc(input);
-      expect(result).toBe("2026-12-31T23:00:00.000Z");
-    });
-
-    it("should handle year transition (New Year)", () => {
-      const input = new Date("2027-01-01T00:00:00.000Z");
-      const result = calculateHourBucketUtc(input);
-      expect(result).toBe("2027-01-01T00:00:00.000Z");
-    });
-  });
-
-  describe("Edge cases - DST and timezones", () => {
-    it("should always use UTC regardless of local timezone", () => {
-      // This test ensures we're using UTC methods
-      const input = new Date("2026-06-15T12:30:00.000Z");
-      const result = calculateHourBucketUtc(input);
-      expect(result).toBe("2026-06-15T12:00:00.000Z");
-      expect(result).toMatch(/Z$/); // Always ends with Z (UTC)
-    });
-  });
-});
-
 describe("calculateRetryAfter", () => {
   describe("Basic retry calculation", () => {
-    it("should return next hour for mid-day hour", () => {
+    it("should add 5 minutes to the timestamp", () => {
       const input = "2026-01-26T14:00:00.000Z";
       const result = calculateRetryAfter(input);
-      expect(result).toBe("2026-01-26T15:00:00.000Z");
+      expect(result).toBe("2026-01-26T14:05:00.000Z");
     });
 
-    it("should return next hour for morning hour", () => {
-      const input = "2026-01-26T08:00:00.000Z";
+    it("should add 5 minutes for morning hour", () => {
+      const input = "2026-01-26T08:30:00.000Z";
       const result = calculateRetryAfter(input);
-      expect(result).toBe("2026-01-26T09:00:00.000Z");
+      expect(result).toBe("2026-01-26T08:35:00.000Z");
+    });
+
+    it("should add 5 minutes for mid-day", () => {
+      const input = "2026-01-26T14:22:30.000Z";
+      const result = calculateRetryAfter(input);
+      expect(result).toBe("2026-01-26T14:27:30.000Z");
+    });
+  });
+
+  describe("Edge cases - Hour boundaries", () => {
+    it("should handle transition across hour boundary (14:58 -> 15:03)", () => {
+      const input = "2026-01-26T14:58:00.000Z";
+      const result = calculateRetryAfter(input);
+      expect(result).toBe("2026-01-26T15:03:00.000Z");
+    });
+
+    it("should handle exactly at hour start", () => {
+      const input = "2026-01-26T14:00:00.000Z";
+      const result = calculateRetryAfter(input);
+      expect(result).toBe("2026-01-26T14:05:00.000Z");
     });
   });
 
   describe("Edge cases - Day boundary", () => {
-    it("should handle last hour of day (23:00 -> 00:00 next day)", () => {
-      const input = "2026-01-26T23:00:00.000Z";
+    it("should handle transition across day boundary (23:57 -> 00:02 next day)", () => {
+      const input = "2026-01-26T23:57:00.000Z";
       const result = calculateRetryAfter(input);
-      expect(result).toBe("2026-01-27T00:00:00.000Z");
+      expect(result).toBe("2026-01-27T00:02:00.000Z");
     });
 
-    it("should handle midnight (00:00 -> 01:00)", () => {
+    it("should handle midnight", () => {
       const input = "2026-01-26T00:00:00.000Z";
       const result = calculateRetryAfter(input);
-      expect(result).toBe("2026-01-26T01:00:00.000Z");
+      expect(result).toBe("2026-01-26T00:05:00.000Z");
     });
   });
 
   describe("Edge cases - Month boundary", () => {
-    it("should handle last hour of month", () => {
-      const input = "2026-01-31T23:00:00.000Z";
+    it("should handle transition across month boundary", () => {
+      const input = "2026-01-31T23:57:00.000Z";
       const result = calculateRetryAfter(input);
-      expect(result).toBe("2026-02-01T00:00:00.000Z");
+      expect(result).toBe("2026-02-01T00:02:00.000Z");
     });
 
     it("should handle end of February (non-leap year)", () => {
-      const input = "2026-02-28T23:00:00.000Z";
+      const input = "2026-02-28T23:58:00.000Z";
       const result = calculateRetryAfter(input);
-      expect(result).toBe("2026-03-01T00:00:00.000Z");
+      expect(result).toBe("2026-03-01T00:03:00.000Z");
     });
 
     it("should handle end of February (leap year)", () => {
-      const input = "2024-02-29T23:00:00.000Z";
+      const input = "2024-02-29T23:56:00.000Z";
       const result = calculateRetryAfter(input);
-      expect(result).toBe("2024-03-01T00:00:00.000Z");
+      expect(result).toBe("2024-03-01T00:01:00.000Z");
     });
   });
 
   describe("Edge cases - Year boundary", () => {
     it("should handle New Year's Eve transition", () => {
-      const input = "2026-12-31T23:00:00.000Z";
+      const input = "2026-12-31T23:58:00.000Z";
       const result = calculateRetryAfter(input);
-      expect(result).toBe("2027-01-01T00:00:00.000Z");
+      expect(result).toBe("2027-01-01T00:03:00.000Z");
     });
   });
 });
@@ -192,6 +112,13 @@ describe("calculateMinutesUntilRetry", () => {
       const now = new Date("2026-01-26T15:00:00.000Z").toISOString();
       const result = calculateMinutesUntilRetry(retryAfter, now);
       expect(result).toBe(0);
+    });
+
+    it("should calculate 5 minutes for exact 5-minute wait", () => {
+      const retryAfter = "2026-01-26T14:35:00.000Z";
+      const now = new Date("2026-01-26T14:30:00.000Z").toISOString();
+      const result = calculateMinutesUntilRetry(retryAfter, now);
+      expect(result).toBe(5);
     });
   });
 
@@ -233,18 +160,18 @@ describe("calculateMinutesUntilRetry", () => {
       expect(result).toBe(1);
     });
 
-    it("should handle 59 minutes remaining", () => {
-      const retryAfter = "2026-01-26T15:00:00.000Z";
-      const now = new Date("2026-01-26T14:01:00.000Z").toISOString();
+    it("should handle 4 minutes remaining", () => {
+      const retryAfter = "2026-01-26T14:35:00.000Z";
+      const now = new Date("2026-01-26T14:31:00.000Z").toISOString();
       const result = calculateMinutesUntilRetry(retryAfter, now);
-      expect(result).toBe(59);
+      expect(result).toBe(4);
     });
 
-    it("should handle 60 minutes remaining (full hour)", () => {
-      const retryAfter = "2026-01-26T15:00:00.000Z";
-      const now = new Date("2026-01-26T14:00:00.000Z").toISOString();
+    it("should handle 5 minutes remaining", () => {
+      const retryAfter = "2026-01-26T14:35:00.000Z";
+      const now = new Date("2026-01-26T14:30:00.000Z").toISOString();
       const result = calculateMinutesUntilRetry(retryAfter, now);
-      expect(result).toBe(60);
+      expect(result).toBe(5);
     });
   });
 
@@ -253,19 +180,26 @@ describe("calculateMinutesUntilRetry", () => {
       // This test verifies the default parameter works
       // We can't test exact value as it depends on current time,
       // but we can verify the function executes without error
-      const retryAfter = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 min future
+      const retryAfter = new Date(Date.now() + 3 * 60 * 1000).toISOString(); // 3 min future
       const result = calculateMinutesUntilRetry(retryAfter);
-      expect(result).toBeGreaterThanOrEqual(29);
-      expect(result).toBeLessThanOrEqual(31);
+      expect(result).toBeGreaterThanOrEqual(2);
+      expect(result).toBeLessThanOrEqual(4);
     });
   });
 });
 
 describe("isInSameHourBucket", () => {
-  describe("Same hour bucket scenarios", () => {
-    it("should return true for timestamps in same hour", () => {
+  describe("Within 5-minute window (should return true)", () => {
+    it("should return true for timestamps 1 minute apart", () => {
       const timestamp1 = "2026-01-26T14:10:00.000Z";
-      const timestamp2 = "2026-01-26T14:50:00.000Z";
+      const timestamp2 = "2026-01-26T14:11:00.000Z";
+      const result = isInSameHourBucket(timestamp1, timestamp2);
+      expect(result).toBe(true);
+    });
+
+    it("should return true for timestamps 4 minutes 59 seconds apart", () => {
+      const timestamp1 = "2026-01-26T14:00:00.000Z";
+      const timestamp2 = "2026-01-26T14:04:59.999Z";
       const result = isInSameHourBucket(timestamp1, timestamp2);
       expect(result).toBe(true);
     });
@@ -276,17 +210,31 @@ describe("isInSameHourBucket", () => {
       expect(result).toBe(true);
     });
 
-    it("should return true for timestamps at hour boundaries", () => {
-      const timestamp1 = "2026-01-26T14:00:00.000Z";
-      const timestamp2 = "2026-01-26T14:59:59.999Z";
+    it("should return true for timestamps 1 second apart", () => {
+      const timestamp1 = "2026-01-26T14:30:00.000Z";
+      const timestamp2 = "2026-01-26T14:30:01.000Z";
       const result = isInSameHourBucket(timestamp1, timestamp2);
       expect(result).toBe(true);
     });
   });
 
-  describe("Different hour bucket scenarios", () => {
-    it("should return false for timestamps in consecutive hours", () => {
-      const timestamp1 = "2026-01-26T14:59:59.999Z";
+  describe("Outside 5-minute window (should return false)", () => {
+    it("should return false for timestamps exactly 5 minutes apart", () => {
+      const timestamp1 = "2026-01-26T14:00:00.000Z";
+      const timestamp2 = "2026-01-26T14:05:00.000Z";
+      const result = isInSameHourBucket(timestamp1, timestamp2);
+      expect(result).toBe(false);
+    });
+
+    it("should return false for timestamps 10 minutes apart", () => {
+      const timestamp1 = "2026-01-26T14:30:00.000Z";
+      const timestamp2 = "2026-01-26T14:40:00.000Z";
+      const result = isInSameHourBucket(timestamp1, timestamp2);
+      expect(result).toBe(false);
+    });
+
+    it("should return false for timestamps in consecutive hours (6+ minutes apart)", () => {
+      const timestamp1 = "2026-01-26T14:50:00.000Z";
       const timestamp2 = "2026-01-26T15:00:00.000Z";
       const result = isInSameHourBucket(timestamp1, timestamp2);
       expect(result).toBe(false);
@@ -307,17 +255,24 @@ describe("isInSameHourBucket", () => {
     });
   });
 
-  describe("Edge cases - Day transitions", () => {
-    it("should return false across midnight boundary", () => {
-      const timestamp1 = "2026-01-26T23:59:59.999Z";
-      const timestamp2 = "2026-01-27T00:00:00.000Z";
+  describe("Edge cases - Day and time transitions", () => {
+    it("should return false across midnight boundary (5+ minutes)", () => {
+      const timestamp1 = "2026-01-26T23:57:00.000Z";
+      const timestamp2 = "2026-01-27T00:03:00.000Z";
       const result = isInSameHourBucket(timestamp1, timestamp2);
       expect(result).toBe(false);
     });
 
-    it("should return true within midnight hour", () => {
+    it("should return true across midnight boundary (within 5 minutes)", () => {
+      const timestamp1 = "2026-01-26T23:59:00.000Z";
+      const timestamp2 = "2026-01-27T00:02:00.000Z";
+      const result = isInSameHourBucket(timestamp1, timestamp2);
+      expect(result).toBe(true);
+    });
+
+    it("should return true within midnight timeframe (4 minutes)", () => {
       const timestamp1 = "2026-01-27T00:00:00.000Z";
-      const timestamp2 = "2026-01-27T00:59:59.999Z";
+      const timestamp2 = "2026-01-27T00:04:00.000Z";
       const result = isInSameHourBucket(timestamp1, timestamp2);
       expect(result).toBe(true);
     });
@@ -326,38 +281,47 @@ describe("isInSameHourBucket", () => {
 
 describe("validateAntiSpam", () => {
   describe("Anti-spam violation scenarios (canCreate: false)", () => {
-    it("should prevent creation when timestamps are in same hour", () => {
+    it("should prevent creation when timestamps are within 5 minutes", () => {
       const lastEntry = "2026-01-26T14:30:00.000Z";
-      const currentAttempt = "2026-01-26T14:45:00.000Z";
+      const currentAttempt = "2026-01-26T14:33:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
 
       expect(result.canCreate).toBe(false);
-      expect(result.retryAfter).toBe("2026-01-26T15:00:00.000Z");
+      expect(result.retryAfter).toBe("2026-01-26T14:35:00.000Z");
     });
 
-    it("should prevent creation when attempting at last second of hour", () => {
-      const lastEntry = "2026-01-26T14:00:00.000Z";
-      const currentAttempt = "2026-01-26T14:59:59.999Z";
+    it("should prevent creation when attempting 1 second after last entry", () => {
+      const lastEntry = "2026-01-26T14:30:00.000Z";
+      const currentAttempt = "2026-01-26T14:30:01.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
 
       expect(result.canCreate).toBe(false);
-      expect(result.retryAfter).toBe("2026-01-26T15:00:00.000Z");
+      expect(result.retryAfter).toBe("2026-01-26T14:35:00.000Z");
     });
 
-    it("should prevent creation when attempting immediately after last entry", () => {
+    it("should prevent creation when attempting 4 minutes 59 seconds after", () => {
       const lastEntry = "2026-01-26T14:30:00.000Z";
-      const currentAttempt = "2026-01-26T14:30:01.000Z"; // 1 second later
+      const currentAttempt = "2026-01-26T14:34:59.999Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
 
       expect(result.canCreate).toBe(false);
-      expect(result.retryAfter).toBe("2026-01-26T15:00:00.000Z");
+      expect(result.retryAfter).toBe("2026-01-26T14:35:00.000Z");
     });
   });
 
   describe("Anti-spam allowed scenarios (canCreate: true)", () => {
-    it("should allow creation in next hour", () => {
+    it("should allow creation exactly 5 minutes later", () => {
       const lastEntry = "2026-01-26T14:30:00.000Z";
-      const currentAttempt = "2026-01-26T15:00:00.000Z";
+      const currentAttempt = "2026-01-26T14:35:00.000Z";
+      const result = validateAntiSpam(lastEntry, currentAttempt);
+
+      expect(result.canCreate).toBe(true);
+      expect(result.retryAfter).toBeUndefined();
+    });
+
+    it("should allow creation 10 minutes later", () => {
+      const lastEntry = "2026-01-26T14:30:00.000Z";
+      const currentAttempt = "2026-01-26T14:40:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
 
       expect(result.canCreate).toBe(true);
@@ -373,16 +337,7 @@ describe("validateAntiSpam", () => {
       expect(result.retryAfter).toBeUndefined();
     });
 
-    it("should allow creation at first millisecond of next hour", () => {
-      const lastEntry = "2026-01-26T14:59:59.999Z";
-      const currentAttempt = "2026-01-26T15:00:00.000Z";
-      const result = validateAntiSpam(lastEntry, currentAttempt);
-
-      expect(result.canCreate).toBe(true);
-      expect(result.retryAfter).toBeUndefined();
-    });
-
-    it("should allow creation next day same hour", () => {
+    it("should allow creation next day", () => {
       const lastEntry = "2026-01-26T14:30:00.000Z";
       const currentAttempt = "2026-01-27T14:30:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
@@ -393,72 +348,106 @@ describe("validateAntiSpam", () => {
   });
 
   describe("Edge cases - Midnight transitions", () => {
-    it("should prevent creation within same midnight hour", () => {
-      const lastEntry = "2026-01-26T00:10:00.000Z";
-      const currentAttempt = "2026-01-26T00:45:00.000Z";
+    it("should prevent creation within 5-minute window across midnight", () => {
+      const lastEntry = "2026-01-26T23:59:00.000Z";
+      const currentAttempt = "2026-01-27T00:02:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
 
       expect(result.canCreate).toBe(false);
-      expect(result.retryAfter).toBe("2026-01-26T01:00:00.000Z");
+      expect(result.retryAfter).toBe("2026-01-27T00:04:00.000Z");
     });
 
-    it("should allow creation after midnight into next day", () => {
-      const lastEntry = "2026-01-26T23:30:00.000Z";
-      const currentAttempt = "2026-01-27T00:00:00.000Z";
+    it("should allow creation after 5-minute window across midnight", () => {
+      const lastEntry = "2026-01-26T23:57:00.000Z";
+      const currentAttempt = "2026-01-27T00:03:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
 
       expect(result.canCreate).toBe(true);
       expect(result.retryAfter).toBeUndefined();
     });
 
-    it("should prevent creation within 23:00 hour and provide correct retry (next day)", () => {
-      const lastEntry = "2026-01-26T23:00:00.000Z";
-      const currentAttempt = "2026-01-26T23:59:59.999Z";
+    it("should prevent creation within midnight 5-minute window", () => {
+      const lastEntry = "2026-01-26T00:01:00.000Z";
+      const currentAttempt = "2026-01-26T00:04:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
 
       expect(result.canCreate).toBe(false);
-      expect(result.retryAfter).toBe("2026-01-27T00:00:00.000Z");
+      expect(result.retryAfter).toBe("2026-01-26T00:06:00.000Z");
     });
   });
 
   describe("Edge cases - Year transitions", () => {
-    it("should handle New Year transition correctly", () => {
-      const lastEntry = "2026-12-31T23:30:00.000Z";
-      const currentAttempt = "2027-01-01T00:00:00.000Z";
+    it("should handle New Year transition correctly (5+ minutes)", () => {
+      const lastEntry = "2026-12-31T23:57:00.000Z";
+      const currentAttempt = "2027-01-01T00:03:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
 
       expect(result.canCreate).toBe(true);
       expect(result.retryAfter).toBeUndefined();
     });
 
-    it("should prevent creation within New Year's Eve final hour", () => {
-      const lastEntry = "2026-12-31T23:00:00.000Z";
-      const currentAttempt = "2026-12-31T23:45:00.000Z";
+    it("should prevent creation within 5-minute window on New Year", () => {
+      const lastEntry = "2026-12-31T23:59:00.000Z";
+      const currentAttempt = "2027-01-01T00:02:00.000Z";
       const result = validateAntiSpam(lastEntry, currentAttempt);
 
       expect(result.canCreate).toBe(false);
-      expect(result.retryAfter).toBe("2027-01-01T00:00:00.000Z");
+      expect(result.retryAfter).toBe("2027-01-01T00:04:00.000Z");
     });
   });
 
   describe("Business rule compliance", () => {
-    it("should enforce exactly 1 entry per hour per user", () => {
+    it("should enforce exactly 1 entry per 5 minutes per user", () => {
       // User creates entry at 14:15
       const firstEntry = "2026-01-26T14:15:00.000Z";
 
-      // Attempts at 14:20, 14:30, 14:50 should all be blocked
-      const attempts = ["2026-01-26T14:20:00.000Z", "2026-01-26T14:30:00.000Z", "2026-01-26T14:50:00.000Z"];
+      // Attempts within 5 minutes should all be blocked
+      const blockedAttempts = [
+        "2026-01-26T14:15:01.000Z", // 1 second later
+        "2026-01-26T14:17:00.000Z", // 2 minutes later
+        "2026-01-26T14:19:59.999Z", // 4m59s later
+      ];
 
-      attempts.forEach((attempt) => {
+      blockedAttempts.forEach((attempt) => {
         const result = validateAntiSpam(firstEntry, attempt);
         expect(result.canCreate).toBe(false);
-        expect(result.retryAfter).toBe("2026-01-26T15:00:00.000Z");
+        expect(result.retryAfter).toBe("2026-01-26T14:20:00.000Z");
       });
 
-      // But 15:00 should be allowed
-      const allowedAttempt = "2026-01-26T15:00:00.000Z";
-      const allowedResult = validateAntiSpam(firstEntry, allowedAttempt);
-      expect(allowedResult.canCreate).toBe(true);
+      // But exactly 5 minutes or more should be allowed
+      const allowedAttempts = [
+        "2026-01-26T14:20:00.000Z", // exactly 5 minutes
+        "2026-01-26T14:25:00.000Z", // 10 minutes
+        "2026-01-26T15:00:00.000Z", // 45 minutes
+      ];
+
+      allowedAttempts.forEach((attempt) => {
+        const result = validateAntiSpam(firstEntry, attempt);
+        expect(result.canCreate).toBe(true);
+        expect(result.retryAfter).toBeUndefined();
+      });
+    });
+
+    it("should calculate correct retry_after for various timestamps", () => {
+      const testCases = [
+        {
+          lastEntry: "2026-01-26T10:23:45.123Z",
+          expected: "2026-01-26T10:28:45.123Z",
+        },
+        {
+          lastEntry: "2026-01-26T14:00:00.000Z",
+          expected: "2026-01-26T14:05:00.000Z",
+        },
+        {
+          lastEntry: "2026-01-26T23:58:30.500Z",
+          expected: "2026-01-27T00:03:30.500Z",
+        },
+      ];
+
+      testCases.forEach(({ lastEntry, expected }) => {
+        const result = calculateRetryAfter(lastEntry);
+        expect(result).toBe(expected);
+      });
     });
   });
 });

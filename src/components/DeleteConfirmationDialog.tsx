@@ -51,7 +51,7 @@ export function DeleteConfirmationDialog({ entryId, onClose, onConfirm }: Delete
       await onConfirm(entryId);
       onClose();
     } catch (err) {
-      console.error("Error deleting entry:", err);
+      // Error handled via UI feedback below
 
       // Handle specific error cases
       if (err instanceof Error) {

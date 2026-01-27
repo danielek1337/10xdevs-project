@@ -14,7 +14,7 @@ const SESSION_KEY = "vibecheck_session";
  * @param session - Supabase session object
  * @param persistent - If true, store in localStorage; if false, store in sessionStorage
  */
-export function storeAuthSession(session: AuthSessionDTO, persistent: boolean = false): void {
+export function storeAuthSession(session: AuthSessionDTO, persistent = false): void {
   const storage = persistent ? localStorage : sessionStorage;
   storage.setItem(SESSION_KEY, JSON.stringify(session));
 }

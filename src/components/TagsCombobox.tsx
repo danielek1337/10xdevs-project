@@ -62,8 +62,8 @@ export function TagsCombobox({ value, onChange, disabled = false, className }: T
           const filteredSuggestions = data.data.filter((tag: TagDTO) => !value.includes(tag.name));
           setSuggestions(filteredSuggestions);
         }
-      } catch (error) {
-        console.error("Error fetching tags:", error);
+      } catch {
+        // Silently fail - suggestions are not critical
       } finally {
         setIsLoading(false);
       }

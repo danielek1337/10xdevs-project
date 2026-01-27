@@ -13,8 +13,8 @@ describe("useResetTokens", () => {
 
   beforeEach(() => {
     // Mock window.location
-    delete (window as any).location;
-    window.location = { ...originalLocation, hash: "" } as any;
+    delete (window as unknown as { location: unknown }).location;
+    window.location = { ...originalLocation, hash: "" } as Location;
   });
 
   afterEach(() => {
