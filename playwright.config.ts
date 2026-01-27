@@ -79,13 +79,6 @@ export default defineConfig({
     timeout: 120 * 1000,
     stdout: "ignore",
     stderr: "pipe",
-    // Pass environment variables to the dev server
-    env: {
-      SUPABASE_URL: process.env.SUPABASE_URL || "",
-      SUPABASE_KEY: process.env.SUPABASE_KEY || "",
-      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
-      NODE_ENV: process.env.NODE_ENV || "test",
-    },
   },
 
   // Output directory for test artifacts
