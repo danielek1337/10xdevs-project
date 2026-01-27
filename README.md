@@ -188,8 +188,9 @@ VibeCheck includes a comprehensive CI/CD pipeline that automatically runs on eve
 1. **TypeScript Check** - Validates type safety
 2. **ESLint** - Checks code quality
 3. **Unit Tests** - Runs Vitest tests
-4. **E2E Tests** - Runs Playwright tests with local Supabase
-5. **Production Build** - Validates production bundle
+4. **Production Build** - Validates production bundle
+
+**Note:** E2E tests are excluded from CI/CD (run locally before merging)
 
 ### Running Pipeline
 

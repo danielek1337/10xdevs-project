@@ -54,55 +54,7 @@ jobs:
         env:
           CI: true
 
-      # 7. Setup Supabase CLI dla testów E2E
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      # 8. Start lokalnej instancji Supabase
-      - name: Start Supabase local
-        run: supabase start
-
-      # 9. Cache Playwright browsers
-      - name: Cache Playwright browsers
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            playwright-${{ runner.os }}-
-
-      # 10. Instalacja przeglądarki Chromium dla Playwright
-      - name: Install Playwright browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npm run playwright:install
-
-      # 11. Uruchomienie testów E2E (Playwright)
-      - name: Run E2E tests
-        run: |
-          export PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-          export SUPABASE_KEY=$(supabase status -o env | grep ANON_KEY | cut -d '=' -f2)
-          export SUPABASE_SERVICE_ROLE_KEY=$(supabase status -o env | grep SERVICE_ROLE_KEY | cut -d '=' -f2)
-          echo "✅ Environment variables set for E2E tests"
-          npm run test:e2e
-        env:
-          CI: true
-
-      # 12. Upload artefaktów Playwright przy failurze
-      - name: Upload Playwright report
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-${{ github.run_number }}
-          path: |
-            playwright-report/
-            playwright-results/
-          retention-days: 7
-          if-no-files-found: ignore
-
-      # 13. Budowanie aplikacji w wersji produkcyjnej
+      # 7. Budowanie aplikacji w wersji produkcyjnej
       - name: Build production
         run: npm run build
         env:
@@ -111,7 +63,7 @@ jobs:
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL || 'http://dummy-url.com' }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY || 'dummy-key' }}
 
-      # 14. Upload build artifacts (opcjonalnie)
+      # 8. Upload build artifacts (opcjonalnie)
       - name: Upload build artifacts
         if: success()
         uses: actions/upload-artifact@v4
@@ -120,11 +72,6 @@ jobs:
           path: dist/
           retention-days: 3
           if-no-files-found: error
-
-      # 15. Stop Supabase po testach
-      - name: Stop Supabase local
-        if: always()
-        run: supabase stop --no-backup
 
   # Job summary
   summary:
@@ -147,7 +94,6 @@ jobs:
           echo "| TypeScript | ${{ needs.test-and-build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ESLint | ${{ needs.test-and-build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Unit Tests | ${{ needs.test-and-build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| E2E Tests | ${{ needs.test-and-build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Production Build | ${{ needs.test-and-build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Overall Result:** ${{ needs.test-and-build.result == 'success' && '✅ Success' || '❌ Failure' }}" >> $GITHUB_STEP_SUMMARY

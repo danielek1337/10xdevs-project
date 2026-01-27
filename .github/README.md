@@ -51,32 +51,29 @@ Uruchamia testy jednostkowe za pomocą Vitest:
 - Testy logiki biznesowej
 - Testy funkcji pomocniczych
 
-### 4. **E2E Tests** 🎭
-
-```bash
-npm run test:e2e
-```
-
-Uruchamia testy end-to-end za pomocą Playwright:
-
-- Testy flow autentykacji
-- Testy CRUD dla wpisów
-- Testy dashboard
-- Weryfikacja izolacji danych użytkowników (RLS)
-
-**Wymagania dla E2E:**
-
-- Lokalna instancja Supabase (automatycznie uruchamiana w pipeline)
-- Przeglądarka Chromium (automatycznie instalowana)
-- Zmienne środowiskowe (automatycznie ustawiane)
-
-### 5. **Production Build** 🏗️
+### 4. **Production Build** 🏗️
 
 ```bash
 npm run build
 ```
 
 Buduje aplikację w wersji produkcyjnej, weryfikując czy kod kompiluje się poprawnie.
+
+---
+
+**⚠️ Uwaga o testach E2E:**
+
+Testy E2E (Playwright) **nie są uruchamiane w CI/CD** z następujących powodów:
+- Długi czas wykonania (~3-5 min)
+- Wymagają lokalnej instancji Supabase
+- Złożona konfiguracja środowiska
+- Najlepiej uruchamiać je lokalnie przed mergem
+
+**Uruchom E2E lokalnie:**
+```bash
+supabase start
+npm run test:e2e
+```
 
 ## Architektura Pipeline
 
@@ -92,28 +89,16 @@ Buduje aplikację w wersji produkcyjnej, weryfikując czy kod kompiluje się pop
 │  5. ESLint code quality check                               │
 │  6. Vitest unit tests                                        │
 ├─────────────────────────────────────────────────────────────┤
-│  7. Setup Supabase CLI                                       │
-│  8. Start local Supabase instance                           │
-│  9. Cache Playwright browsers                               │
-│  10. Install Playwright Chromium (if not cached)           │
-│  11. Run Playwright E2E tests (with env vars)              │
-│  12. Upload Playwright artifacts (on failure)               │
+│  7. Build production bundle                                 │
+│  8. Upload build artifacts (on success)                     │
 ├─────────────────────────────────────────────────────────────┤
-│  13. Build production bundle                                │
-│  14. Upload build artifacts (on success)                    │
-│  15. Stop Supabase (cleanup)                                │
-├─────────────────────────────────────────────────────────────┤
-│  16. Generate enhanced pipeline summary                     │
+│  9. Generate pipeline summary                               │
 └─────────────────────────────────────────────────────────────┘
+
+Note: E2E tests are excluded from CI/CD (run locally)
 ```
 
 ## Zmienne środowiskowe
-
-### Wymagane dla testów E2E (ustawiane automatycznie)
-
-- `PUBLIC_SUPABASE_URL` - URL lokalnej instancji Supabase
-- `SUPABASE_KEY` - Anon key z lokalnej instancji
-- `SUPABASE_SERVICE_ROLE_KEY` - Service role key dla testów E2E
 
 ### Wymagane dla production build (opcjonalne w CI)
 
@@ -126,22 +111,18 @@ Dla prawdziwego deploymentu, dodaj GitHub Secrets:
 
 ## Artefakty
 
-### Playwright Report
+### Build Artifacts
 
-Przy failurze testów E2E, raport Playwright jest automatycznie uploadowany jako artefakt:
+Przy sukcesie pipeline, zbudowana aplikacja jest automatycznie uploadowana jako artefakt:
 
 1. Przejdź do zakładki **Actions**
-2. Wybierz failed workflow run
+2. Wybierz successful workflow run
 3. Scroll down do sekcji **Artifacts**
-4. Pobierz `playwright-report`
-5. Otwórz `index.html` w przeglądarce
+4. Pobierz `build-{run_number}`
 
-Raport zawiera:
+**Zawiera:** Folder `dist/` z zbudowaną aplikacją gotową do deploymentu
 
-- Screenshots z momentu failure
-- Video recordings testów
-- Trace viewer dla szczegółowego debugowania
-- Stack traces i error context
+**Retention:** 3 dni
 
 ## Troubleshooting
 
@@ -169,11 +150,15 @@ npm run test:watch
 npm run test:ui
 ```
 
-### ❌ E2E tests failing
+### ℹ️ E2E tests
+
+Testy E2E **nie są uruchamiane w CI/CD**. Uruchamiaj je lokalnie przed mergem:
 
 ```bash
-# Uruchom testy E2E lokalnie:
+# Start Supabase
 supabase start
+
+# Uruchom testy E2E
 npm run test:e2e
 
 # Z UI dla debugowania:
@@ -190,46 +175,26 @@ npm run test:e2e:headed
 npm run build
 ```
 
-### ❌ E2E tests fail with "supabaseUrl is required"
-
-Ten błąd oznacza, że zmienne środowiskowe nie są przekazywane do Astro dev server uruchamianego przez Playwright.
-
-**Przyczyna:**
-- `$GITHUB_ENV` zapisuje zmienne dla *kolejnych kroków*, ale nie dla subprocessów
-- Playwright uruchamia Astro dev server jako subprocess
-- Subprocess nie dziedziczy zmiennych z `$GITHUB_ENV`
-
-**Rozwiązanie:**
-Zmienne muszą być eksportowane (`export`) w tym samym kroku co uruchomienie testów:
-
-```yaml
-- name: Run E2E tests
-  run: |
-    export PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-    export SUPABASE_KEY=$(supabase status -o env | grep ANON_KEY | cut -d '=' -f2)
-    export SUPABASE_SERVICE_ROLE_KEY=$(supabase status -o env | grep SERVICE_ROLE_KEY | cut -d '=' -f2)
-    npm run test:e2e
-```
 
 ## Cache i Optymalizacja
 
 Pipeline wykorzystuje cache dla:
 
 - **npm dependencies** - Przyspiesza instalację zależności (hash `package-lock.json`)
-- **Playwright browsers** - Cachuje przeglądarki Chromium między uruchomieniami
 - **Node.js setup** - Automatycznie czyta wersję z `.nvmrc` (22.14.0)
 
 ## Czas wykonania
 
-Średni czas wykonania pipeline: **~4-7 minut** (z cache)
+Średni czas wykonania pipeline: **~2-3 minuty** (z cache)
 
 - Setup (30s-1 min z cache, 2 min bez cache)
 - Linting & Type checking (~30s)
 - Unit tests (~30s)
-- E2E tests (2-4 min)
 - Build (~1 min)
 
 **Timeout:** 30 minut (zabezpieczenie przed zawieszeniem)
+
+**Korzyść wykluczenia E2E:** Pipeline jest ~4-5 minut szybszy! ⚡
 
 ## Następne kroki
 
