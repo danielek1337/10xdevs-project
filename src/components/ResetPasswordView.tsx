@@ -1,13 +1,13 @@
 /**
  * ResetPasswordView Component
  *
- * Password reset form - sets new password after clicking email link.
+ * Password reset form with React Hook Form - sets new password after clicking email link.
  *
  * Features:
- * - Extract tokens from URL hash
+ * - Extract tokens from URL hash (custom hook)
  * - New password input with strength indicator
- * - Password confirmation
- * - Form validation
+ * - Password confirmation with automatic validation
+ * - Form validation with real-time feedback
  * - Loading states
  * - Success state (with auto-redirect)
  * - Error handling (invalid/expired token)
@@ -15,7 +15,9 @@
  * - Accessibility (ARIA labels, error announcements)
  */
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,126 +25,65 @@ import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 import { PasswordStrengthIndicator } from "./PasswordStrengthIndicator";
 import { CheckCircle2 } from "lucide-react";
-import { resetPasswordSchema } from "@/lib/validators/auth.validator";
-import type { MessageResponseDTO, ErrorResponseDTO } from "@/types";
-
-interface ResetPasswordState {
-  accessToken: string | null;
-  refreshToken: string | null;
-  password: string;
-  confirmPassword: string;
-  isLoading: boolean;
-  error: string | null;
-  success: boolean;
-}
+import { resetPasswordFormSchema, type ResetPasswordFormData } from "@/lib/validators/auth.validator.client";
+import { useResetPassword } from "@/hooks/useAuth";
+import { useResetTokens } from "@/hooks/useResetTokens";
 
 export default function ResetPasswordView() {
-  const [state, setState] = useState<ResetPasswordState>({
-    accessToken: null,
-    refreshToken: null,
-    password: "",
-    confirmPassword: "",
-    isLoading: false,
-    error: null,
-    success: false,
+  // Extract tokens from URL
+  const { accessToken, error: tokenError } = useResetTokens();
+
+  // Success state
+  const [success, setSuccess] = useState(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+
+  // React Hook Form setup
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    watch,
+  } = useForm({
+    resolver: zodResolver(resetPasswordFormSchema),
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    },
+    mode: "onTouched", // Validate on blur
   });
 
-  // Extract tokens from URL hash on mount
+  const password = watch("password");
+
+  // Reset password API hook
+  const { resetPassword, isLoading, error } = useResetPassword();
+
+  // Handle redirect after success
   useEffect(() => {
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
+    if (shouldRedirect) {
+      const timer = setTimeout(() => {
+        window.location.href = "/login";
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldRedirect]);
 
+  // Form submit handler
+  const onSubmit = async (data: ResetPasswordFormData) => {
     if (!accessToken) {
-      setState((prev) => ({
-        ...prev,
-        error: "Invalid or expired reset link",
-      }));
-      return;
-    }
-
-    setState((prev) => ({
-      ...prev,
-      accessToken,
-      refreshToken,
-    }));
-  }, []);
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-
-    if (!state.accessToken) {
-      setState((prev) => ({
-        ...prev,
-        error: "Invalid reset link",
-      }));
-      return;
-    }
-
-    if (state.password !== state.confirmPassword) {
-      setState((prev) => ({
-        ...prev,
-        error: "Passwords do not match",
-      }));
-      return;
-    }
-
-    setState((prev) => ({ ...prev, isLoading: true, error: null }));
-
-    // Client-side validation with Zod
-    const validationResult = resetPasswordSchema.safeParse({ password: state.password });
-
-    if (!validationResult.success) {
-      const errors = validationResult.error.flatten().fieldErrors;
-      const errorMessage = Object.values(errors).flat()[0] || "Password validation failed";
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage,
-      }));
       return;
     }
 
     try {
-      // Call API endpoint
-      const response = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${state.accessToken}`,
-        },
-        body: JSON.stringify({
-          password: state.password,
-        }),
-      });
-
-      if (!response.ok) {
-        const error: ErrorResponseDTO = await response.json();
-        throw new Error(error.error || "Failed to reset password");
-      }
-
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        success: true,
-      }));
-
-      // Redirect to login after 2 seconds
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 2000);
-    } catch (error) {
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: error instanceof Error ? error.message : "An unexpected error occurred",
-      }));
+      await resetPassword(accessToken, data.password);
+      setSuccess(true);
+      setShouldRedirect(true);
+    } catch {
+      // Error is already handled by useResetPassword hook
     }
   };
 
   // Error state: invalid token
-  if (state.error && !state.accessToken) {
+  if (tokenError && !accessToken) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
         <Card className="w-full max-w-md">
@@ -151,7 +92,7 @@ export default function ResetPasswordView() {
           </CardHeader>
           <CardContent>
             <Alert variant="destructive" className="mb-4" role="alert">
-              {state.error}
+              {tokenError}
             </Alert>
             <Button asChild className="w-full">
               <a href="/forgot-password">Request new link</a>
@@ -163,7 +104,7 @@ export default function ResetPasswordView() {
   }
 
   // Success state
-  if (state.success) {
+  if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
         <Card className="w-full max-w-md">
@@ -183,6 +124,8 @@ export default function ResetPasswordView() {
     );
   }
 
+  const isResetting = isSubmitting || isLoading;
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
       <Card className="w-full max-w-md">
@@ -191,25 +134,28 @@ export default function ResetPasswordView() {
           <CardDescription>Enter your new password below</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
             {/* Password Input */}
             <div className="flex flex-col gap-2">
               <Label htmlFor="password-input">
                 New Password <span className="text-destructive">*</span>
               </Label>
               <Input
+                {...register("password")}
                 id="password-input"
-                name="password"
                 type="password"
                 placeholder="••••••••"
-                value={state.password}
-                onChange={(e) => setState((prev) => ({ ...prev, password: e.target.value }))}
-                disabled={state.isLoading}
-                required
+                disabled={isResetting}
                 aria-required="true"
+                aria-invalid={!!errors.password}
               />
+              {errors.password && (
+                <p className="text-xs text-destructive" role="alert">
+                  {errors.password.message}
+                </p>
+              )}
               {/* Password Strength Indicator */}
-              <PasswordStrengthIndicator password={state.password} />
+              <PasswordStrengthIndicator password={password || ""} />
             </div>
 
             {/* Confirm Password Input */}
@@ -218,34 +164,31 @@ export default function ResetPasswordView() {
                 Confirm New Password <span className="text-destructive">*</span>
               </Label>
               <Input
+                {...register("confirmPassword")}
                 id="confirm-password-input"
-                name="confirmPassword"
                 type="password"
                 placeholder="••••••••"
-                value={state.confirmPassword}
-                onChange={(e) => setState((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                disabled={state.isLoading}
-                required
+                disabled={isResetting}
                 aria-required="true"
-                aria-invalid={
-                  state.confirmPassword && state.password !== state.confirmPassword
-                }
+                aria-invalid={!!errors.confirmPassword}
               />
-              {state.confirmPassword && state.password !== state.confirmPassword && (
-                <p className="text-xs text-destructive">Passwords do not match</p>
+              {errors.confirmPassword && (
+                <p className="text-xs text-destructive" role="alert">
+                  {errors.confirmPassword.message}
+                </p>
               )}
             </div>
 
             {/* Error Alert */}
-            {state.error && (
+            {error && (
               <Alert variant="destructive" role="alert">
-                {state.error}
+                {error}
               </Alert>
             )}
 
             {/* Submit Button */}
-            <Button type="submit" disabled={state.isLoading} className="w-full">
-              {state.isLoading ? "Resetting..." : "Reset Password"}
+            <Button type="submit" disabled={isResetting} className="w-full">
+              {isResetting ? "Resetting..." : "Reset Password"}
             </Button>
           </form>
         </CardContent>
@@ -253,4 +196,5 @@ export default function ResetPasswordView() {
     </div>
   );
 }
+
 

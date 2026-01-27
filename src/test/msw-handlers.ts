@@ -17,6 +17,84 @@ const API_BASE = "/api";
  * Each handler intercepts a specific endpoint and returns mock data.
  */
 export const handlers = [
+  // Auth: Login
+  http.post(`${API_BASE}/auth/login`, async ({ request }) => {
+    const body: any = await request.json();
+
+    if (body.email === "test@example.com" && body.password === "Password123") {
+      return HttpResponse.json({
+        session: {
+          access_token: "mock-access-token",
+          refresh_token: "mock-refresh-token",
+          expires_at: Date.now() + 3600000,
+          user: {
+            id: "test-user-id",
+            email: "test@example.com",
+          },
+        },
+        user: {
+          id: "test-user-id",
+          email: "test@example.com",
+        },
+      });
+    }
+
+    return HttpResponse.json({ error: "Invalid credentials" }, { status: 401 });
+  }),
+
+  // Auth: Signup
+  http.post(`${API_BASE}/auth/signup`, async ({ request }) => {
+    const body: any = await request.json();
+
+    if (body.email === "existing@example.com") {
+      return HttpResponse.json({ error: "Email already exists" }, { status: 400 });
+    }
+
+    return HttpResponse.json({
+      session: {
+        access_token: "mock-access-token",
+        refresh_token: "mock-refresh-token",
+        expires_at: Date.now() + 3600000,
+        user: {
+          id: "new-user-id",
+          email: body.email,
+        },
+      },
+      user: {
+        id: "new-user-id",
+        email: body.email,
+      },
+    });
+  }),
+
+  // Auth: Forgot Password
+  http.post(`${API_BASE}/auth/forgot-password`, async ({ request }) => {
+    const body: any = await request.json();
+
+    return HttpResponse.json({
+      message: `Password reset link sent to ${body.email}`,
+    });
+  }),
+
+  // Auth: Reset Password
+  http.post(`${API_BASE}/auth/reset-password`, async ({ request }) => {
+    const authHeader = request.headers.get("Authorization");
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return HttpResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+
+    if (token === "invalid-token") {
+      return HttpResponse.json({ error: "Invalid or expired token" }, { status: 401 });
+    }
+
+    return HttpResponse.json({
+      message: "Password reset successful",
+    });
+  }),
+
   // Example: Mock GET /api/entries
   http.get(`${API_BASE}/entries`, () => {
     return HttpResponse.json({
@@ -34,7 +112,7 @@ export const handlers = [
 
   // Example: Mock POST /api/entries
   http.post(`${API_BASE}/entries`, async ({ request }) => {
-    const body = await request.json();
+    const body: any = await request.json();
     return HttpResponse.json(
       {
         data: {
