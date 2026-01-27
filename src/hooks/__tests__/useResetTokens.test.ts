@@ -18,7 +18,12 @@ describe("useResetTokens", () => {
   });
 
   afterEach(() => {
-    window.location = originalLocation;
+    // Restore original location using Object.defineProperty
+    Object.defineProperty(window, "location", {
+      value: originalLocation,
+      writable: true,
+      configurable: true,
+    });
   });
 
   it("should extract valid tokens from URL hash", () => {
@@ -60,4 +65,3 @@ describe("useResetTokens", () => {
     expect(result.current.error).toBe("Invalid or expired reset link");
   });
 });
-

@@ -7,12 +7,21 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  calculateHourBucketUtc,
   calculateRetryAfter,
   calculateMinutesUntilRetry,
   isInSameHourBucket,
   validateAntiSpam,
 } from "./anti-spam.utils";
+
+/**
+ * Helper function for tests: Calculate hour bucket (start of hour) in UTC
+ * This is used for testing hour-based anti-spam logic
+ */
+function calculateHourBucketUtc(timestamp: Date): string {
+  const bucket = new Date(timestamp);
+  bucket.setUTCMinutes(0, 0, 0);
+  return bucket.toISOString();
+}
 
 describe("calculateHourBucketUtc", () => {
   describe("Basic hour bucket calculation", () => {
@@ -166,21 +175,21 @@ describe("calculateMinutesUntilRetry", () => {
   describe("Basic minutes calculation", () => {
     it("should calculate minutes remaining when retry is in the future", () => {
       const retryAfter = "2026-01-26T15:00:00.000Z";
-      const now = new Date("2026-01-26T14:35:00.000Z").getTime();
+      const now = new Date("2026-01-26T14:35:00.000Z").toISOString();
       const result = calculateMinutesUntilRetry(retryAfter, now);
       expect(result).toBe(25);
     });
 
     it("should return 0 when retry time has passed", () => {
       const retryAfter = "2026-01-26T14:00:00.000Z";
-      const now = new Date("2026-01-26T15:00:00.000Z").getTime();
+      const now = new Date("2026-01-26T15:00:00.000Z").toISOString();
       const result = calculateMinutesUntilRetry(retryAfter, now);
       expect(result).toBe(0);
     });
 
     it("should return 0 when retry time is exactly now", () => {
       const retryAfter = "2026-01-26T15:00:00.000Z";
-      const now = new Date("2026-01-26T15:00:00.000Z").getTime();
+      const now = new Date("2026-01-26T15:00:00.000Z").toISOString();
       const result = calculateMinutesUntilRetry(retryAfter, now);
       expect(result).toBe(0);
     });
@@ -189,28 +198,28 @@ describe("calculateMinutesUntilRetry", () => {
   describe("Rounding behavior", () => {
     it("should round up partial minutes (0.1 min -> 1 min)", () => {
       const retryAfter = "2026-01-26T15:00:00.000Z";
-      const now = new Date("2026-01-26T14:59:54.000Z").getTime(); // 6 seconds = 0.1 min
+      const now = new Date("2026-01-26T14:59:54.000Z").toISOString(); // 6 seconds = 0.1 min
       const result = calculateMinutesUntilRetry(retryAfter, now);
       expect(result).toBe(1);
     });
 
     it("should round up partial minutes (0.5 min -> 1 min)", () => {
       const retryAfter = "2026-01-26T15:00:00.000Z";
-      const now = new Date("2026-01-26T14:59:30.000Z").getTime(); // 30 seconds
+      const now = new Date("2026-01-26T14:59:30.000Z").toISOString(); // 30 seconds
       const result = calculateMinutesUntilRetry(retryAfter, now);
       expect(result).toBe(1);
     });
 
     it("should round up partial minutes (0.9 min -> 1 min)", () => {
       const retryAfter = "2026-01-26T15:00:00.000Z";
-      const now = new Date("2026-01-26T14:59:06.000Z").getTime(); // 54 seconds
+      const now = new Date("2026-01-26T14:59:06.000Z").toISOString(); // 54 seconds
       const result = calculateMinutesUntilRetry(retryAfter, now);
       expect(result).toBe(1);
     });
 
     it("should handle exact minute boundaries", () => {
       const retryAfter = "2026-01-26T15:00:00.000Z";
-      const now = new Date("2026-01-26T14:40:00.000Z").getTime();
+      const now = new Date("2026-01-26T14:40:00.000Z").toISOString();
       const result = calculateMinutesUntilRetry(retryAfter, now);
       expect(result).toBe(20);
     });
@@ -219,21 +228,21 @@ describe("calculateMinutesUntilRetry", () => {
   describe("Edge cases - Time values", () => {
     it("should handle 1 minute remaining", () => {
       const retryAfter = "2026-01-26T15:00:00.000Z";
-      const now = new Date("2026-01-26T14:59:00.000Z").getTime();
+      const now = new Date("2026-01-26T14:59:00.000Z").toISOString();
       const result = calculateMinutesUntilRetry(retryAfter, now);
       expect(result).toBe(1);
     });
 
     it("should handle 59 minutes remaining", () => {
       const retryAfter = "2026-01-26T15:00:00.000Z";
-      const now = new Date("2026-01-26T14:01:00.000Z").getTime();
+      const now = new Date("2026-01-26T14:01:00.000Z").toISOString();
       const result = calculateMinutesUntilRetry(retryAfter, now);
       expect(result).toBe(59);
     });
 
     it("should handle 60 minutes remaining (full hour)", () => {
       const retryAfter = "2026-01-26T15:00:00.000Z";
-      const now = new Date("2026-01-26T14:00:00.000Z").getTime();
+      const now = new Date("2026-01-26T14:00:00.000Z").toISOString();
       const result = calculateMinutesUntilRetry(retryAfter, now);
       expect(result).toBe(60);
     });
