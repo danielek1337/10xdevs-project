@@ -64,18 +64,18 @@ pull-request.yml:
 env:
   CI: true
   NODE_ENV: integration  ✅
-  PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
-  PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+  SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}          # Mapowane!
+  SUPABASE_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}     # Mapowane!
   SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 ```
 
 ### 7. Zmienne z Sekretów ✅
 
-**GitHub Secrets:**
-- ✅ `PUBLIC_SUPABASE_URL` - z secrets
-- ✅ `PUBLIC_SUPABASE_ANON_KEY` - z secrets
-- ✅ `SUPABASE_SERVICE_ROLE_KEY` - z secrets
-- ✅ Wszystkie zgodne z `.env.example` (struktura)
+**GitHub Secrets (nazwy w GitHub):**
+- ✅ `PUBLIC_SUPABASE_URL` → mapowane do `SUPABASE_URL`
+- ✅ `PUBLIC_SUPABASE_ANON_KEY` → mapowane do `SUPABASE_KEY`
+- ✅ `SUPABASE_SERVICE_ROLE_KEY` → bez zmian
+- ✅ Automatyczne mapowanie do lokalnych nazw projektu
 
 ### 8. Coverage Collection ✅
 

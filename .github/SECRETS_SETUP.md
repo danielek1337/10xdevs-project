@@ -6,9 +6,13 @@ Workflow `pull-request.yml` wymaga następujących sekretów GitHub do prawidło
 
 ## 🔐 Lista Sekretów
 
+> **Uwaga:** Sekrety w GitHub Actions używają prefiksu `PUBLIC_*`, ale są automatycznie mapowane do lokalnych nazw używanych w projekcie (`SUPABASE_URL`, `SUPABASE_KEY`).
+
 ### 1. PUBLIC_SUPABASE_URL
 
 **Opis:** URL do instancji Supabase (produkcyjnej lub testowej)
+
+**Mapowanie:** W CI/CD → `SUPABASE_URL` (lokalna nazwa w projekcie)
 
 **Format:** `https://xxxxxxxxxxxxx.supabase.co`
 
@@ -28,6 +32,8 @@ https://abcdefghijklmnop.supabase.co
 ### 2. PUBLIC_SUPABASE_ANON_KEY
 
 **Opis:** Publiczny klucz API (anon key) do Supabase
+
+**Mapowanie:** W CI/CD → `SUPABASE_KEY` (lokalna nazwa w projekcie)
 
 **Format:** JWT token (długi string zaczynający się od `eyJ`)
 
@@ -140,21 +146,29 @@ Jeśli musisz zaktualizować sekret:
 
 ### Lokalnie (Development)
 
-W lokalnym środowisku używasz pliku `.env`:
+W lokalnym środowisku używasz pliku `.env` z **lokalnymi nazwami**:
 
 ```bash
 # .env (NIE commituj tego pliku!)
-PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-PUBLIC_SUPABASE_ANON_KEY=your-local-anon-key
+SUPABASE_URL=http://127.0.0.1:54321
+SUPABASE_KEY=your-local-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-local-service-role-key
 ```
 
 ### CI/CD (GitHub Actions)
 
-W CI/CD używasz GitHub Secrets:
-- Sekrety są automatycznie wstrzykiwane jako zmienne środowiskowe
-- Workflow pobiera je przez `${{ secrets.SECRET_NAME }}`
+W CI/CD używasz GitHub Secrets z nazwami `PUBLIC_*`:
+- GitHub Secrets: `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+- Workflow **automatycznie mapuje** je do lokalnych nazw: `SUPABASE_URL`, `SUPABASE_KEY`
 - Wartości sekretów **nigdy** nie są widoczne w logach
+
+**Mapowanie w CI/CD:**
+```yaml
+env:
+  SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}          # PUBLIC_* → lokalna nazwa
+  SUPABASE_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}     # PUBLIC_* → lokalna nazwa
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+```
 
 ---
 

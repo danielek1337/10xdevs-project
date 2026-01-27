@@ -48,7 +48,7 @@ async function globalSetup() {
   loadEnv();
 
   // Supabase local instance - Use SERVICE ROLE KEY for admin access
-  const supabaseUrl = process.env.PUBLIC_SUPABASE_URL || "http://127.0.0.1:54321";
+  const supabaseUrl = process.env.SUPABASE_URL || "http://127.0.0.1:54321";
 
   // Use SERVICE ROLE KEY (not anon key) to have admin privileges
   // This allows us to create users that are automatically confirmed

@@ -107,8 +107,8 @@ Workflow `pull-request.yml` automatycznie uruchamia się przy każdym Pull Reque
 **Zmienne środowiskowe:**
 - `CI=true`
 - `NODE_ENV=integration`
-- `PUBLIC_SUPABASE_URL` (z GitHub Secrets)
-- `PUBLIC_SUPABASE_ANON_KEY` (z GitHub Secrets)
+- `SUPABASE_URL` (z secrets.PUBLIC_SUPABASE_URL - automatycznie mapowane)
+- `SUPABASE_KEY` (z secrets.PUBLIC_SUPABASE_ANON_KEY - automatycznie mapowane)
 - `SUPABASE_SERVICE_ROLE_KEY` (z GitHub Secrets)
 
 **Artifacts:**
@@ -180,9 +180,13 @@ Workflow wymaga następujących sekretów w ustawieniach repozytorium:
 
 ```bash
 PUBLIC_SUPABASE_URL          # URL do instancji Supabase (np. https://xxx.supabase.co)
+                             # Mapowane do: SUPABASE_URL w projekcie
 PUBLIC_SUPABASE_ANON_KEY     # Anon key z Supabase
+                             # Mapowane do: SUPABASE_KEY w projekcie
 SUPABASE_SERVICE_ROLE_KEY    # Service Role Key z Supabase (dla admin operations)
 ```
+
+**Uwaga:** GitHub Secrets używają nazw `PUBLIC_*`, ale workflow automatycznie mapuje je do lokalnych nazw używanych w projekcie (`SUPABASE_URL`, `SUPABASE_KEY`).
 
 ### Jak dodać sekrety:
 
