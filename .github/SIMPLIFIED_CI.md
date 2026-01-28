@@ -1,4 +1,4 @@
-# Uproszczony CI/CD Pipeline (bez E2E)
+# Uproszczony CI/CD Pipeline 
 
 ## 📋 Podsumowanie zmian
 
