@@ -32,3 +32,5 @@ test-results/
 
 # vitest
 .vitest/
+
+.vercel/
